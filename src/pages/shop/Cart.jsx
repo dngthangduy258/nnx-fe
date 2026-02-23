@@ -78,12 +78,12 @@ const Cart = () => {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
-                                        className="flex items-center gap-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
+                                        className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
                                     >
                                         <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
                                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 text-center sm:text-left">
                                             <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>
                                             <p className="text-sm text-text-muted capitalize mb-2">{item.category}</p>
                                             <p className="font-bold text-primary">{item.price.toLocaleString('vi-VN')} đ</p>
@@ -99,11 +99,11 @@ const Cart = () => {
                                             </button>
                                         </div>
 
-                                        <div className="text-right min-w-[100px]">
-                                            <p className="font-bold text-lg mb-2">{(item.price * item.quantity).toLocaleString('vi-VN')} đ</p>
+                                        <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-6 sm:gap-2 w-full sm:w-auto sm:min-w-[120px]">
+                                            <p className="font-bold text-lg text-primary sm:text-gray-800">{(item.price * item.quantity).toLocaleString('vi-VN')} đ</p>
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
-                                                className="text-red-400 hover:text-red-600 transition-colors"
+                                                className="text-red-400 hover:text-red-600 transition-colors p-2 sm:p-0"
                                             >
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
@@ -126,7 +126,7 @@ const Cart = () => {
                                         <span>Phí vận chuyển</span>
                                         <span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')} đ`}</span>
                                     </div>
-                                    <div className="border-t border-gray-100 pt-4 flex justify-between font-extrabold text-xl text-primary-dark">
+                                    <div className="border-t border-gray-100 pt-4 flex justify-between font-extrabold text-lg sm:text-xl text-primary-dark">
                                         <span>Tổng cộng</span>
                                         <span className="text-secondary">{total.toLocaleString('vi-VN')} đ</span>
                                     </div>

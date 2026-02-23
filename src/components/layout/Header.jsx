@@ -40,11 +40,11 @@ const Header = () => {
             </div>
 
             {/* Main Header */}
-            <div className="container mx-auto px-4 py-3 md:py-4">
-                <div className="flex items-center gap-4 md:gap-8">
+            <div className="container mx-auto px-4 py-3">
+                <div className="flex items-center gap-2 md:gap-8">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-                        <div className="text-2xl md:text-3xl font-extrabold tracking-tight">NNX<span className="text-white font-normal">AGRO</span></div>
+                    <Link to="/" className="flex items-center gap-2 flex-shrink-0 mr-2">
+                        <div className="text-xl md:text-3xl font-extrabold tracking-tight">NNX<span className="text-white font-normal">AGRO</span></div>
                     </Link>
 
                     {/* Search Bar */}
@@ -62,7 +62,7 @@ const Header = () => {
                     </form>
 
                     {/* Cart & Mobile Nav Toggle */}
-                    <div className="flex items-center gap-6 ml-auto md:ml-0 flex-shrink-0">
+                    <div className="flex items-center gap-1 sm:gap-6 ml-auto md:ml-0 flex-shrink-0">
                         {/* Mobile Search Button */}
                         <button className="md:hidden p-2 text-white" onClick={() => setIsMobileMenuOpen(true)}>
                             <Search className="w-6 h-6" />
@@ -79,8 +79,8 @@ const Header = () => {
                         </Link>
 
                         {/* Mobile Menu Icon */}
-                        <button className="md:hidden p-2 text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            {isMobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+                        <button className="md:hidden p-1 text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
                     </div>
                 </div>

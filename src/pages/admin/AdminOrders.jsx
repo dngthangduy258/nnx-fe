@@ -20,9 +20,9 @@ const AdminOrders = () => {
 
     return (
         <div className="admin-orders space-y-8">
-            <div>
-                <h1 className="text-3xl font-extrabold text-gray-800">Danh sách đơn hàng</h1>
-                <p className="text-gray-500">Theo dõi và quản lý quá trình giao hàng cho khách hàng.</p>
+            <div className="mb-6">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Danh sách đơn hàng</h1>
+                <p className="text-sm md:text-base text-gray-500">Theo dõi và quản lý quá trình giao hàng cho khách hàng.</p>
             </div>
 
             {orders.length > 0 ? (
@@ -46,16 +46,16 @@ const AdminOrders = () => {
                                             {order.status}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-6 mt-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mt-4">
                                         <span className="flex items-center gap-2 text-sm text-gray-600"><User className="w-4 h-4 text-primary" /> {order.customer_name}</span>
                                         <span className="flex items-center gap-2 text-sm text-gray-600"><Phone className="w-4 h-4 text-primary" /> {order.customer_phone}</span>
                                         <span className="flex items-center gap-2 text-sm text-gray-600"><Calendar className="w-4 h-4 text-primary" /> {new Date(order.created_at).toLocaleDateString('vi-VN')}</span>
                                     </div>
                                     <p className="flex items-center gap-2 text-sm text-gray-500"><MapPin className="w-4 h-4 text-primary" /> {order.customer_address}</p>
                                 </div>
-                                <div className="mt-4 md:mt-0 text-right">
-                                    <p className="text-gray-400 text-xs uppercase font-bold mb-1">Tổng cộng</p>
-                                    <p className="text-2xl font-black text-secondary">{order.total_amount.toLocaleString('vi-VN')} đ</p>
+                                <div className="mt-6 md:mt-0 text-left md:text-right">
+                                    <p className="text-gray-400 text-[10px] md:text-xs uppercase font-bold mb-1">Tổng cộng</p>
+                                    <p className="text-xl md:text-2xl font-black text-secondary">{order.total_amount.toLocaleString('vi-VN')} đ</p>
                                 </div>
                             </div>
 

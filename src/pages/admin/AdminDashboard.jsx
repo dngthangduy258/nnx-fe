@@ -19,12 +19,12 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard space-y-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-800">Tổng quan</h1>
-                    <p className="text-gray-500">Chào mừng bạn trở lại, đây là những gì đang diễn ra với cửa hàng của bạn.</p>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Tổng quan</h1>
+                    <p className="text-sm md:text-base text-gray-500">Chào mừng bạn trở lại, đây là những gì đang diễn ra.</p>
                 </div>
-                <button className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg">
+                <button className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg w-full md:w-auto">
                     <TrendingUp className="w-5 h-5" /> Tải báo cáo
                 </button>
             </div>

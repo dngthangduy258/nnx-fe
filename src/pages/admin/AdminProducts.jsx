@@ -56,18 +56,18 @@ const AdminProducts = () => {
 
     return (
         <div className="admin-products space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-800">Quản lý sản phẩm</h1>
-                    <p className="text-gray-500">Thêm mới hoặc chỉnh sửa thông tin kho hàng của bạn.</p>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Quản lý sản phẩm</h1>
+                    <p className="text-sm md:text-base text-gray-500">Thêm mới hoặc chỉnh sửa thông tin kho hàng của bạn.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+                <Button onClick={() => handleOpenModal()} className="flex items-center justify-center gap-2 w-full md:w-auto">
                     <Plus className="w-5 h-5" /> Thêm sản phẩm
                 </Button>
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -78,7 +78,7 @@ const AdminProducts = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <select className="px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 outline-none">
+                <select className="px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 outline-none w-full md:w-auto">
                     <option>Tất cả danh mục</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -144,7 +144,7 @@ const AdminProducts = () => {
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            className="bg-white w-full max-w-2xl rounded-[32px] p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                            className="bg-white w-full max-w-2xl rounded-2xl md:rounded-[32px] p-5 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
                         >
                             <button
                                 onClick={() => setIsModalOpen(false)}
