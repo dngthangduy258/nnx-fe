@@ -1,0 +1,187 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Button from '../../components/common/Button';
+
+const Cart = () => {
+    const { cart, removeFromCart, updateCartQuantity, checkout } = useApp();
+    const [isOrderPlaced, setIsOrderPlaced] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
+    const [orderData, setOrderData] = useState(null);
+
+    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shipping = subtotal > 1000000 ? 0 : 35000;
+    const total = subtotal + shipping;
+
+    const handleCheckout = async (e) => {
+        e.preventDefault();
+        if (cart.length === 0) return;
+
+        try {
+            setIsLoading(true);
+            const result = await checkout(customerInfo);
+            setOrderData(result);
+            setIsOrderPlaced(true);
+        } catch (err) {
+            alert(err.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isOrderPlaced) {
+        return (
+            <div className="container pt-40 pb-20 text-center">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="max-w-md mx-auto"
+                >
+                    <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShoppingBag className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-3xl font-extrabold text-primary-dark mb-4">Đặt hàng thành công!</h2>
+                    <p className="text-text-muted mb-2">
+                        Cảm ơn bạn đã tin tưởng Nông Nghiệp Xanh. Chúng tôi sẽ liên hệ sớm nhất để xác nhận đơn hàng.
+                    </p>
+                    <p className="font-bold text-primary mb-8">Mã đơn hàng: #{orderData.id}</p>
+                    <div className="flex flex-col gap-3">
+                        <Link to={`/tracking/${orderData.trackingId}`}>
+                            <Button variant="outline" className="w-full">Theo dõi đơn hàng</Button>
+                        </Link>
+                        <Link to="/products">
+                            <Button size="lg" className="w-full">Tiếp tục mua sắm</Button>
+                        </Link>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="cart-page pt-24 pb-20">
+            <div className="container">
+                <h1 className="text-3xl font-extrabold text-primary-dark mb-10">Giỏ hàng của bạn</h1>
+
+                {cart.length > 0 ? (
+                    <div className="grid lg:grid-cols-3 gap-10">
+                        {/* Cart Items */}
+                        <div className="lg:col-span-2 space-y-4">
+                            <AnimatePresence>
+                                {cart.map((item) => (
+                                    <motion.div
+                                        key={item.id}
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="flex items-center gap-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
+                                    >
+                                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>
+                                            <p className="text-sm text-text-muted capitalize mb-2">{item.category}</p>
+                                            <p className="font-bold text-primary">{item.price.toLocaleString('vi-VN')} đ</p>
+                                        </div>
+
+                                        <div className="flex items-center border border-gray-100 rounded-lg p-1 bg-gray-50">
+                                            <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="p-1.5 hover:bg-white rounded-md transition-all">
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                            <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
+                                            <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="p-1.5 hover:bg-white rounded-md transition-all">
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="text-right min-w-[100px]">
+                                            <p className="font-bold text-lg mb-2">{(item.price * item.quantity).toLocaleString('vi-VN')} đ</p>
+                                            <button
+                                                onClick={() => removeFromCart(item.id)}
+                                                className="text-red-400 hover:text-red-600 transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Summary & Checkout */}
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                <h2 className="text-xl font-bold mb-6">Đơn hàng</h2>
+                                <div className="space-y-4 mb-6">
+                                    <div className="flex justify-between text-text-muted">
+                                        <span>Tạm tính</span>
+                                        <span>{subtotal.toLocaleString('vi-VN')} đ</span>
+                                    </div>
+                                    <div className="flex justify-between text-text-muted">
+                                        <span>Phí vận chuyển</span>
+                                        <span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')} đ`}</span>
+                                    </div>
+                                    <div className="border-t border-gray-100 pt-4 flex justify-between font-extrabold text-xl text-primary-dark">
+                                        <span>Tổng cộng</span>
+                                        <span className="text-secondary">{total.toLocaleString('vi-VN')} đ</span>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleCheckout} className="space-y-4">
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Họ và tên"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                        value={customerInfo.name}
+                                        onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                                    />
+                                    <input
+                                        required
+                                        type="tel"
+                                        placeholder="Số điện thoại"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                        value={customerInfo.phone}
+                                        onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                                    />
+                                    <textarea
+                                        required
+                                        placeholder="Địa chỉ nhận hàng"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none h-24 resize-none"
+                                        value={customerInfo.address}
+                                        onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
+                                    ></textarea>
+
+                                    <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
+                                        {isLoading ? 'Đang xử lý...' : 'Gửi Đơn Hàng'} <ArrowRight className="w-5 h-5" />
+                                    </Button>
+                                </form>
+
+                                <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-text-muted uppercase font-bold text-center">
+                                    <CreditCard className="w-4 h-4" /> Thanh toán khi nhận hàng (COD)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                        <ShoppingBag className="w-20 h-20 text-gray-200 mx-auto mb-6" />
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Giỏ hàng trống</h3>
+                        <p className="text-text-muted mb-8">Bạn chưa có sản phẩm nào trong giỏ hàng.</p>
+                        <Link to="/products">
+                            <Button size="lg">Khám phá sản phẩm</Button>
+                        </Link>
+                    </div>
+                )}
+            </div>
+
+        </div>
+    );
+};
+
+export default Cart;
