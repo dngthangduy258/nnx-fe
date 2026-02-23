@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
-// Use environment variable for production, fallback to local for development
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787/api';
+// Tự động thêm /api nếu ENV thiếu, đảm bảo gọi đúng endpoint
+const baseFromEnv = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787';
+export const API_BASE_URL = baseFromEnv.endsWith('/api') ? baseFromEnv : `${baseFromEnv}/api`;
 
 export const AppProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
