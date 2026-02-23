@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
-import { ChevronRight, Filter, Search, Star, Menu } from 'lucide-react';
+import { ChevronRight, Filter, Search, Star, Menu, X } from 'lucide-react';
 import { categories } from '../../data/categories';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ProductList = () => {
     const { products, loading, error, fetchData } = useApp();
@@ -22,6 +23,21 @@ const ProductList = () => {
     // Filter states
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+    const [showMobileFilter, setShowMobileFilter] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const productsPerPage = 12;
+
+    // Prevent scrolling when mobile filter is open
+    useEffect(() => {
+        if (showMobileFilter) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showMobileFilter]);
 
     useEffect(() => {
         const cat = queryParams.get('category') || 'all';
@@ -36,14 +52,15 @@ const ProductList = () => {
 
     const handleCategoryClick = (id) => {
         setSelectedCategory(id);
+        setCurrentPage(1); // Reset to first page
+        setShowMobileFilter(false);
         navigate(`/products?category=${id}${searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''}`);
     };
 
     const handlePriceFilter = (e) => {
         e.preventDefault();
-        // Just trigger standard filter recalculation visually
-        // in a real app this would likely trigger an API refetch.
-        // We handle it in the useMemo below.
+        setCurrentPage(1); // Reset to first page
+        setShowMobileFilter(false);
     };
 
     const filteredProducts = useMemo(() => {
@@ -67,11 +84,22 @@ const ProductList = () => {
         if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
         if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
         if (sortBy === 'rating') result.sort((a, b) => b.rating - a.rating);
-        // 'popular' could just be default order or rating sorting
         if (sortBy === 'popular') result.sort((a, b) => b.rating - a.rating);
 
         return result;
     }, [products, selectedCategory, searchTerm, sortBy, minPrice, maxPrice]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * productsPerPage;
+        return filteredProducts.slice(startIndex, startIndex + productsPerPage);
+    }, [filteredProducts, currentPage]);
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     if (loading) {
         return (
@@ -90,7 +118,110 @@ const ProductList = () => {
     }
 
     return (
-        <div className="bg-[#f5f5f5] min-h-screen pb-20 pt-4">
+        <div className="bg-[#f5f5f5] min-h-screen pb-20 pt-4 relative">
+            {/* Mobile Filter Drawer */}
+            <AnimatePresence>
+                {showMobileFilter && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowMobileFilter(false)}
+                            className="fixed inset-0 bg-black/50 z-[100] md:hidden"
+                        />
+                        {/* Drawer content */}
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[101] md:hidden overflow-y-auto p-5 shadow-2xl"
+                        >
+                            <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-3">
+                                <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                                    <Filter className="w-5 h-5 text-primary" /> BỘ LỌC
+                                </h2>
+                                <button
+                                    onClick={() => setShowMobileFilter(false)}
+                                    className="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:text-gray-800"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="mb-8">
+                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase text-primary">
+                                    <Menu className="w-4 h-4" /> Danh Mục
+                                </h3>
+                                <ul className="flex flex-col gap-3">
+                                    <li
+                                        className={`py-2 px-3 rounded-md text-sm cursor-pointer transition-colors ${selectedCategory === 'all' ? 'bg-primary/10 text-primary font-bold' : 'text-gray-600 bg-gray-50'}`}
+                                        onClick={() => handleCategoryClick('all')}
+                                    >
+                                        Tất cả sản phẩm
+                                    </li>
+                                    {categories.map(cat => (
+                                        <li
+                                            key={cat.id}
+                                            className={`py-2 px-3 rounded-md text-sm cursor-pointer transition-colors ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-bold' : 'text-gray-600 bg-gray-50'}`}
+                                            onClick={() => handleCategoryClick(cat.id)}
+                                        >
+                                            {cat.name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="mb-4">
+                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase text-primary">
+                                    Khoảng Giá (₫)
+                                </h3>
+                                <form onSubmit={handlePriceFilter} className="flex flex-col gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="number"
+                                            placeholder="TỪ"
+                                            className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-primary"
+                                            value={minPrice}
+                                            onChange={e => setMinPrice(e.target.value)}
+                                        />
+                                        <span className="text-gray-400">—</span>
+                                        <input
+                                            type="number"
+                                            placeholder="ĐẾN"
+                                            className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-primary"
+                                            value={maxPrice}
+                                            onChange={e => setMaxPrice(e.target.value)}
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-primary text-white py-3 font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95"
+                                    >
+                                        ÁP DỤNG BỘ LỌC
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMinPrice('');
+                                            setMaxPrice('');
+                                            setSelectedCategory('all');
+                                            setCurrentPage(1);
+                                            setShowMobileFilter(false);
+                                            navigate('/products');
+                                        }}
+                                        className="w-full border border-gray-200 text-gray-500 py-3 text-sm font-medium rounded-lg"
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                </form>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
             <div className="container mx-auto px-2 md:px-0 flex flex-col md:flex-row gap-4">
 
                 {/* Left Sidebar Filter (Hidden on Small Mobile, visible on Md+) */}
@@ -199,7 +330,10 @@ const ProductList = () => {
                             <option value="price-low">Giá: Tăng dần</option>
                             <option value="price-high">Giá: Giảm dần</option>
                         </select>
-                        <button className="flex-1 flex justify-center items-center py-3 gap-1 text-sm text-gray-700">
+                        <button
+                            onClick={() => setShowMobileFilter(true)}
+                            className="flex-1 flex justify-center items-center py-3 gap-1 text-sm text-gray-700 active:bg-gray-50 transition-colors"
+                        >
                             Bộ lọc <Filter className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -217,9 +351,9 @@ const ProductList = () => {
                     )}
 
                     {/* Grid List */}
-                    {filteredProducts.length > 0 ? (
+                    {paginatedProducts.length > 0 ? (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                            {filteredProducts.map(p => (
+                            {paginatedProducts.map(p => (
                                 <ProductCard key={p.id} product={p} />
                             ))}
                         </div>
@@ -238,15 +372,35 @@ const ProductList = () => {
                         </div>
                     )}
 
-                    {/* Pagination Mock */}
-                    {filteredProducts.length > 0 && (
+                    {/* Actual Pagination */}
+                    {totalPages > 1 && (
                         <div className="flex justify-center mt-8 mb-4">
                             <div className="flex bg-white rounded-sm shadow-sm overflow-hidden text-sm md:text-base border border-gray-200">
-                                <button className="px-3 md:px-4 py-1.5 md:py-2 text-gray-400 hover:bg-gray-50 flex items-center justify-center border-r border-gray-200">&lt;</button>
-                                <button className="px-3 md:px-4 py-1.5 md:py-2 text-white bg-primary font-medium border-r border-gray-200">1</button>
-                                <button className="px-3 md:px-4 py-1.5 md:py-2 text-gray-600 hover:text-primary border-r border-gray-200">2</button>
-                                <button className="px-3 md:px-4 py-1.5 md:py-2 text-gray-600 hover:text-primary hover:bg-gray-50 border-r border-gray-200">...</button>
-                                <button className="px-3 md:px-4 py-1.5 md:py-2 text-gray-600 hover:bg-gray-50 flex items-center justify-center">&gt;</button>
+                                <button
+                                    disabled={currentPage === 1}
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    className={`px-3 md:px-4 py-1.5 md:py-2 flex items-center justify-center border-r border-gray-200 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    &lt;
+                                </button>
+
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => handlePageChange(i + 1)}
+                                        className={`px-3 md:px-4 py-1.5 md:py-2 font-medium border-r border-gray-200 ${currentPage === i + 1 ? 'bg-primary text-white' : 'text-gray-600 hover:text-primary hover:bg-gray-50'}`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+
+                                <button
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    className={`px-3 md:px-4 py-1.5 md:py-2 flex items-center justify-center ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50'}`}
+                                >
+                                    &gt;
+                                </button>
                             </div>
                         </div>
                     )}
