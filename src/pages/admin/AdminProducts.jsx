@@ -8,6 +8,7 @@ import { categories } from '../../data/categories';
 const AdminProducts = () => {
     const { products, addProduct, updateProduct, deleteProduct } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState({
@@ -20,9 +21,11 @@ const AdminProducts = () => {
         rating: 5.0
     });
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     const handleOpenModal = (product = null) => {
         if (product) {
@@ -78,8 +81,12 @@ const AdminProducts = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <select className="px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 outline-none w-full md:w-auto">
-                    <option>Tất cả danh mục</option>
+                <select
+                    className="px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 outline-none w-full md:w-auto"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                    <option value="all">Tất cả danh mục</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
             </div>

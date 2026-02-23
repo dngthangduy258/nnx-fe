@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 const AdminDashboard = () => {
     const { products, orders } = useApp();
 
-    const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalSales = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
     const totalProducts = products.length;
     const totalOrders = orders.length;
 
@@ -74,8 +74,8 @@ const AdminDashboard = () => {
                                 {orders.length > 0 ? orders.slice(0, 5).map((order) => (
                                     <tr key={order.id} className="text-sm hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 font-bold text-gray-700">#{order.id.toString().slice(-6)}</td>
-                                        <td className="px-6 py-4">{order.customer.name}</td>
-                                        <td className="px-6 py-4 font-bold">{order.total.toLocaleString('vi-VN')} đ</td>
+                                        <td className="px-6 py-4">{order.customer_name}</td>
+                                        <td className="px-6 py-4 font-bold">{(order.total_amount || 0).toLocaleString('vi-VN')} đ</td>
                                         <td className="px-6 py-4">
                                             <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold uppercase">
                                                 {order.status}
