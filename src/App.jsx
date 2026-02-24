@@ -8,6 +8,7 @@ import ProductDetail from './pages/shop/ProductDetail';
 import Cart from './pages/shop/Cart';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminCategories from './pages/admin/AdminCategories';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import OrderTracking from './pages/shop/OrderTracking';
@@ -34,6 +35,7 @@ function App() {
                         {/* Admin Routes with AdminLayout */}
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route index element={<AdminDashboard />} />
+                            <Route path="categories" element={<AdminCategories />} />
                             <Route path="products" element={<AdminProducts />} />
                             <Route path="orders" element={<AdminOrders />} />
                         </Route>

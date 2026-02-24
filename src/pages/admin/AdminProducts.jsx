@@ -20,6 +20,17 @@ const AdminProducts = () => {
         rating: 5.0
     });
 
+    const normalizeProductFormData = (product = {}) => ({
+        ...product,
+        name: product.name || '',
+        price: product.price ?? '',
+        category: product.category || 'pesticides',
+        stock: product.stock ?? product.amount ?? '',
+        description: product.description || '',
+        image: product.image || 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600',
+        rating: product.rating ?? 5.0
+    });
+
     const filteredProducts = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
@@ -29,18 +40,10 @@ const AdminProducts = () => {
     const handleOpenModal = (product = null) => {
         if (product) {
             setEditingProduct(product);
-            setFormData(product);
+            setFormData(normalizeProductFormData(product));
         } else {
             setEditingProduct(null);
-            setFormData({
-                name: '',
-                price: '',
-                category: 'pesticides',
-                stock: '',
-                description: '',
-                image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600',
-                rating: 5.0
-            });
+            setFormData(normalizeProductFormData());
         }
         setIsModalOpen(true);
     };
@@ -145,12 +148,12 @@ const AdminProducts = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                        className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm p-4 md:p-6"
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            className="bg-white w-full max-w-2xl rounded-2xl md:rounded-[32px] p-5 md:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                            className="bg-white w-full max-w-2xl rounded-2xl md:rounded-[32px] p-5 md:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto mx-auto my-4 md:my-8"
                         >
                             <button
                                 onClick={() => setIsModalOpen(false)}

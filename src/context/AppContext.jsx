@@ -18,6 +18,13 @@ export const AppProvider = ({ children }) => {
     });
 
     const [orders, setOrders] = useState([]);
+    const [adminOrderDetail, setAdminOrderDetail] = useState(null);
+    const [ordersPagination, setOrdersPagination] = useState({
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        totalPages: 1
+    });
     const [adminUser, setAdminUser] = useState(() => {
         const saved = localStorage.getItem('nnx_user');
         return saved ? JSON.parse(saved) : null;
@@ -61,7 +68,7 @@ export const AppProvider = ({ children }) => {
             ]);
 
             if (!productsRes.ok || !categoriesRes.ok) {
-                throw new Error('Failed to fetch data from API');
+                throw new Error('Khong the tai du lieu tu he thong');
             }
 
             const [productsData, categoriesData] = await Promise.all([
@@ -79,21 +86,60 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (filters = {}) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+            const params = new URLSearchParams();
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && String(value) !== '') {
+                    params.set(key, String(value));
+                }
+            });
+            const url = `${API_BASE_URL}/admin/orders${params.toString() ? `?${params.toString()}` : ''}`;
+            const response = await fetch(url, {
                 headers: getAuthHeaders()
             });
             if (response.status === 401 || response.status === 403) {
                 clearAdminSession();
                 throw new Error('Phiên đăng nhập đã hết hạn');
             }
-            if (!response.ok) throw new Error('Failed to fetch orders');
+            if (!response.ok) throw new Error('Khong the tai danh sach don hang');
             const data = await response.json();
-            setOrders(data);
+            if (Array.isArray(data)) {
+                setOrders(data);
+                setOrdersPagination({
+                    page: 1,
+                    pageSize: data.length || 20,
+                    totalItems: data.length || 0,
+                    totalPages: 1
+                });
+            } else {
+                setOrders(data.data || []);
+                setOrdersPagination(data.pagination || {
+                    page: 1,
+                    pageSize: 20,
+                    totalItems: 0,
+                    totalPages: 1
+                });
+            }
+            return data;
         } catch (err) {
             console.error('Error fetching orders:', err);
+            throw err;
         }
+    };
+
+    const fetchAdminOrderDetail = async (orderId) => {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
+            headers: getAuthHeaders()
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!response.ok) throw new Error('Khong the tai chi tiet don hang');
+        const data = await response.json();
+        setAdminOrderDetail(data);
+        return data;
     };
 
     useEffect(() => {
@@ -153,7 +199,7 @@ export const AppProvider = ({ children }) => {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to create order');
+            if (!response.ok) throw new Error('Khong the tao don hang');
 
             const data = await response.json();
 
@@ -178,7 +224,7 @@ export const AppProvider = ({ children }) => {
                 body: JSON.stringify({ username, password })
             });
 
-            if (!response.ok) throw new Error('Invalid credentials');
+            if (!response.ok) throw new Error('Sai ten dang nhap hoac mat khau');
 
             const data = await response.json();
             const expiresAt = Date.now() + (data.expiresIn || 3600) * 1000;
@@ -198,14 +244,18 @@ export const AppProvider = ({ children }) => {
     // Admin Product CRUD
     const addProduct = async (product) => {
         try {
+            const normalizedProduct = {
+                ...product,
+                stock: Number(product.stock ?? product.amount ?? 0),
+            };
             const response = await fetch(`${API_BASE_URL}/products`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify(product)
+                body: JSON.stringify(normalizedProduct)
             });
             if (response.status === 401 || response.status === 403) {
                 clearAdminSession();
-                throw new Error('Unauthorized');
+                throw new Error('Khong co quyen thuc hien');
             }
             if (response.ok) fetchData();
         } catch (e) {
@@ -215,14 +265,18 @@ export const AppProvider = ({ children }) => {
 
     const updateProduct = async (updatedProduct) => {
         try {
+            const normalizedProduct = {
+                ...updatedProduct,
+                stock: Number(updatedProduct.stock ?? updatedProduct.amount ?? 0),
+            };
             const response = await fetch(`${API_BASE_URL}/products/${updatedProduct.id}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify(updatedProduct)
+                body: JSON.stringify(normalizedProduct)
             });
             if (response.status === 401 || response.status === 403) {
                 clearAdminSession();
-                throw new Error('Unauthorized');
+                throw new Error('Khong co quyen thuc hien');
             }
             if (response.ok) fetchData();
         } catch (e) {
@@ -238,7 +292,7 @@ export const AppProvider = ({ children }) => {
             });
             if (response.status === 401 || response.status === 403) {
                 clearAdminSession();
-                throw new Error('Unauthorized');
+                throw new Error('Khong co quyen thuc hien');
             }
             if (response.ok) fetchData();
         } catch (e) {
@@ -246,21 +300,74 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const updateOrderStatus = async (orderId, status, note) => {
+    const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
+            const requestBody = typeof payload === 'string'
+                ? { status, note: payload }
+                : { status, ...payload };
             const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ status, note })
+                body: JSON.stringify(requestBody)
             });
             if (response.status === 401 || response.status === 403) {
                 clearAdminSession();
-                throw new Error('Unauthorized');
+                throw new Error('Khong co quyen thuc hien');
             }
             if (response.ok) fetchOrders();
         } catch (e) {
             console.error('Error updating order status:', e);
         }
+    };
+
+    const addCategory = async (category) => {
+        const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(category)
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || 'Khong the tao danh muc');
+        }
+        await fetchData();
+    };
+
+    const updateCategory = async (id, category) => {
+        const response = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(category)
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || 'Khong the cap nhat danh muc');
+        }
+        await fetchData();
+    };
+
+    const deleteCategory = async (id) => {
+        const response = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || 'Khong the xoa danh muc');
+        }
+        await fetchData();
     };
 
     const logout = () => {
@@ -275,6 +382,8 @@ export const AppProvider = ({ children }) => {
             error,
             cart,
             orders,
+            adminOrderDetail,
+            ordersPagination,
             adminUser,
             isAdminAuthenticated: !!adminUser && !!adminToken && Date.now() < adminTokenExpiresAt,
             addToCart,
@@ -287,6 +396,10 @@ export const AppProvider = ({ children }) => {
             login,
             fetchOrders,
             updateOrderStatus,
+            fetchAdminOrderDetail,
+            addCategory,
+            updateCategory,
+            deleteCategory,
             fetchData,
             logout
         }}>
@@ -297,6 +410,6 @@ export const AppProvider = ({ children }) => {
 
 export const useApp = () => {
     const context = useContext(AppContext);
-    if (!context) throw new Error('useApp must be used within an AppProvider');
+    if (!context) throw new Error('useApp phai duoc dung ben trong AppProvider');
     return context;
 };

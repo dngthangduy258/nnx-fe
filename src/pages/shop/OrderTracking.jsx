@@ -160,6 +160,24 @@ const OrderTracking = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {order.shipping && (
+                                        <div className="mt-8 bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-2">
+                                            <h4 className="font-bold text-blue-700 text-sm uppercase">Thông tin giao vận</h4>
+                                            <p className="text-sm"><span className="font-semibold">Đơn vị vận chuyển:</span> {order.shipping.shipping_provider}</p>
+                                            <p className="text-sm"><span className="font-semibold">Mã vận đơn hãng:</span> {order.shipping.shipping_code}</p>
+                                            {order.shipping.shipping_contact_name ? (
+                                                <p className="text-sm"><span className="font-semibold">Liên hệ giao vận:</span> {order.shipping.shipping_contact_name}</p>
+                                            ) : null}
+                                            {order.shipping.shipping_contact_phone ? (
+                                                <p className="text-sm"><span className="font-semibold">SĐT giao vận:</span> {order.shipping.shipping_contact_phone}</p>
+                                            ) : null}
+                                            <p className="text-sm"><span className="font-semibold">Phí vận chuyển:</span> {(order.shipping.shipping_fee || 0).toLocaleString('vi-VN')} đ</p>
+                                            {order.shipping.expected_delivery_date ? (
+                                                <p className="text-sm"><span className="font-semibold">Dự kiến giao:</span> {order.shipping.expected_delivery_date}</p>
+                                            ) : null}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Order Summary */}
