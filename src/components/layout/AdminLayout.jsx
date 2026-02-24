@@ -1,22 +1,22 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ShoppingBasket, ClipboardList, LogOut, Package, ArrowLeft, Menu, X } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-
-    const user = JSON.parse(localStorage.getItem('nnx_user'));
+    const { adminUser, isAdminAuthenticated, logout } = useApp();
 
     React.useEffect(() => {
-        if (!user) {
+        if (!isAdminAuthenticated || adminUser?.role !== 'admin') {
             navigate('/login');
         }
-    }, [user, navigate]);
+    }, [isAdminAuthenticated, adminUser, navigate]);
 
     const handleLogout = () => {
-        localStorage.removeItem('nnx_user');
+        logout();
         navigate('/login');
     };
 
@@ -104,7 +104,7 @@ const AdminLayout = () => {
 
                     <div className="flex items-center gap-2 md:gap-3 bg-gray-50 px-3 py-1.5 md:px-4 md:py-2 rounded-full border border-gray-100">
                         <div className="w-6 h-6 md:w-8 md:h-8 bg-primary/20 rounded-full flex items-center justify-center text-primary font-bold text-[10px] md:text-xs">AD</div>
-                        <span className="text-[10px] md:text-sm font-bold text-gray-700 hidden xs:block">Admin</span>
+                        <span className="text-[10px] md:text-sm font-bold text-gray-700 hidden xs:block">{adminUser?.username || 'Admin'}</span>
                     </div>
                 </header>
 

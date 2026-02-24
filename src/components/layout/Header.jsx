@@ -24,16 +24,16 @@ const Header = () => {
             <div className="hidden md:block bg-primary-dark">
                 <div className="container mx-auto px-4 flex justify-between items-center text-xs py-1.5 h-8">
                     <div className="flex gap-4">
-                        <Link to="/seller" className="hover:text-gray-200">Kênh Chuyên Gia</Link>
+                        <Link to="/products" className="hover:text-gray-200">Kênh Chuyên Gia</Link>
                         <span className="text-white/50">|</span>
-                        <Link to="/app" className="hover:text-gray-200">Tải ứng dụng NNX</Link>
+                        <Link to="/products" className="hover:text-gray-200">Tải ứng dụng NNX</Link>
                         <span className="text-white/50">|</span>
                         <span>Kết nối</span>
                     </div>
                     <div className="flex gap-4 items-center">
                         <Link to="/lookup-order" className="flex items-center gap-1 hover:text-gray-200">Tra cứu đơn hàng</Link>
-                        <Link to="/notifications" className="flex items-center gap-1 hover:text-gray-200"><Bell className="w-4 h-4" /> Thông báo</Link>
-                        <Link to="/help" className="flex items-center gap-1 hover:text-gray-200"><HelpCircle className="w-4 h-4" /> Hỗ trợ</Link>
+                        <Link to="/products" className="flex items-center gap-1 hover:text-gray-200"><Bell className="w-4 h-4" /> Thông báo</Link>
+                        <Link to="/lookup-order" className="flex items-center gap-1 hover:text-gray-200"><HelpCircle className="w-4 h-4" /> Hỗ trợ</Link>
                         <Link to="/login" className="flex items-center gap-1 hover:text-gray-200"><User className="w-4 h-4" /> Đăng nhập</Link>
                     </div>
                 </div>

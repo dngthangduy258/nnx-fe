@@ -4,7 +4,11 @@ import { ShoppingBag, Users, DollarSign, Package, TrendingUp, ArrowUpRight, Cloc
 import { motion } from 'framer-motion';
 
 const AdminDashboard = () => {
-    const { products, orders } = useApp();
+    const { products, orders, fetchOrders } = useApp();
+
+    React.useEffect(() => {
+        fetchOrders();
+    }, []);
 
     const totalSales = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
     const totalProducts = products.length;

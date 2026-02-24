@@ -3,10 +3,9 @@ import { useApp } from '../../context/AppContext';
 import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
-import { categories } from '../../data/categories';
 
 const AdminProducts = () => {
-    const { products, addProduct, updateProduct, deleteProduct } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);

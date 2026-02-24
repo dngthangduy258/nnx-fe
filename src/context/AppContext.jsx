@@ -18,6 +18,29 @@ export const AppProvider = ({ children }) => {
     });
 
     const [orders, setOrders] = useState([]);
+    const [adminUser, setAdminUser] = useState(() => {
+        const saved = localStorage.getItem('nnx_user');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [adminToken, setAdminToken] = useState(() => localStorage.getItem('nnx_token') || '');
+    const [adminTokenExpiresAt, setAdminTokenExpiresAt] = useState(() => Number(localStorage.getItem('nnx_token_expires_at') || '0'));
+
+    const clearAdminSession = () => {
+        localStorage.removeItem('nnx_user');
+        localStorage.removeItem('nnx_token');
+        localStorage.removeItem('nnx_token_expires_at');
+        setAdminUser(null);
+        setAdminToken('');
+        setAdminTokenExpiresAt(0);
+    };
+
+    const getAuthHeaders = () => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminToken) {
+            headers.Authorization = `Bearer ${adminToken}`;
+        }
+        return headers;
+    };
 
     const fetchData = async (options = {}) => {
         try {
@@ -58,7 +81,13 @@ export const AppProvider = ({ children }) => {
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/orders`);
+            const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+                headers: getAuthHeaders()
+            });
+            if (response.status === 401 || response.status === 403) {
+                clearAdminSession();
+                throw new Error('Phiên đăng nhập đã hết hạn');
+            }
             if (!response.ok) throw new Error('Failed to fetch orders');
             const data = await response.json();
             setOrders(data);
@@ -74,6 +103,13 @@ export const AppProvider = ({ children }) => {
     useEffect(() => {
         localStorage.setItem('agro_cart', JSON.stringify(cart));
     }, [cart]);
+
+    useEffect(() => {
+        if (!adminTokenExpiresAt || !adminToken) return;
+        if (Date.now() > adminTokenExpiresAt) {
+            clearAdminSession();
+        }
+    }, [adminTokenExpiresAt, adminToken]);
 
     const addToCart = (product) => {
         setCart(prev => {
@@ -145,7 +181,13 @@ export const AppProvider = ({ children }) => {
             if (!response.ok) throw new Error('Invalid credentials');
 
             const data = await response.json();
+            const expiresAt = Date.now() + (data.expiresIn || 3600) * 1000;
             localStorage.setItem('nnx_user', JSON.stringify(data.user));
+            localStorage.setItem('nnx_token', data.token);
+            localStorage.setItem('nnx_token_expires_at', String(expiresAt));
+            setAdminUser(data.user);
+            setAdminToken(data.token);
+            setAdminTokenExpiresAt(expiresAt);
             return data.user;
         } catch (err) {
             console.error('Login error:', err);
@@ -158,9 +200,13 @@ export const AppProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/products`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(product)
             });
+            if (response.status === 401 || response.status === 403) {
+                clearAdminSession();
+                throw new Error('Unauthorized');
+            }
             if (response.ok) fetchData();
         } catch (e) {
             console.error('Error adding product:', e);
@@ -171,9 +217,13 @@ export const AppProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${updatedProduct.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(updatedProduct)
             });
+            if (response.status === 401 || response.status === 403) {
+                clearAdminSession();
+                throw new Error('Unauthorized');
+            }
             if (response.ok) fetchData();
         } catch (e) {
             console.error('Error updating product:', e);
@@ -183,8 +233,13 @@ export const AppProvider = ({ children }) => {
     const deleteProduct = async (productId) => {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: getAuthHeaders()
             });
+            if (response.status === 401 || response.status === 403) {
+                clearAdminSession();
+                throw new Error('Unauthorized');
+            }
             if (response.ok) fetchData();
         } catch (e) {
             console.error('Error deleting product:', e);
@@ -195,13 +250,21 @@ export const AppProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ status, note })
             });
+            if (response.status === 401 || response.status === 403) {
+                clearAdminSession();
+                throw new Error('Unauthorized');
+            }
             if (response.ok) fetchOrders();
         } catch (e) {
             console.error('Error updating order status:', e);
         }
+    };
+
+    const logout = () => {
+        clearAdminSession();
     };
 
     return (
@@ -212,6 +275,8 @@ export const AppProvider = ({ children }) => {
             error,
             cart,
             orders,
+            adminUser,
+            isAdminAuthenticated: !!adminUser && !!adminToken && Date.now() < adminTokenExpiresAt,
             addToCart,
             removeFromCart,
             updateCartQuantity,
@@ -222,7 +287,8 @@ export const AppProvider = ({ children }) => {
             login,
             fetchOrders,
             updateOrderStatus,
-            fetchData
+            fetchData,
+            logout
         }}>
             {children}
         </AppContext.Provider>

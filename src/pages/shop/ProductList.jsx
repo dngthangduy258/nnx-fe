@@ -3,11 +3,11 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { ChevronRight, Filter, Search, Star, Menu, X } from 'lucide-react';
-import { categories } from '../../data/categories';
+import { categories as staticCategories } from '../../data/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ProductList = () => {
-    const { products, loading, error, fetchData } = useApp();
+    const { products, categories: apiCategories, loading, error, fetchData } = useApp();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -26,6 +26,7 @@ const ProductList = () => {
     const [showMobileFilter, setShowMobileFilter] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 12;
+    const categories = apiCategories.length > 0 ? apiCategories : staticCategories;
 
     // Prevent scrolling when mobile filter is open
     useEffect(() => {
