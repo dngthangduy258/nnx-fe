@@ -6,9 +6,10 @@ const AppContext = createContext();
 const baseFromEnv = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787';
 export const API_BASE_URL = baseFromEnv.endsWith('/api') ? baseFromEnv : `${baseFromEnv}/api`;
 
-/** Chuyen URL anh R2 (r2.dev) sang proxy qua BE de tranh 404/ORB khi bucket chua public. */
-export const getProductImageUrl = (url) => {
+/** Tra ve URL anh. Dung truc tiep link R2 khi bucket da public + CORS; neu can tranh ORB thi doi sang useProxy=true. */
+export const getProductImageUrl = (url, useProxy = false) => {
     if (!url) return url;
+    if (!useProxy) return url;
     try {
         const u = new URL(url);
         if (u.hostname.includes('r2.dev')) return `${API_BASE_URL}/assets/${u.pathname.replace(/^\//, '')}`;
