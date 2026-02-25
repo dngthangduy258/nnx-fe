@@ -339,6 +339,19 @@ export const AppProvider = ({ children }) => {
         return data.url;
     };
 
+    const deleteProductImageFromR2 = async (imageUrl) => {
+        if (!imageUrl || typeof imageUrl !== 'string' || imageUrl.startsWith('blob:')) return;
+        if (!imageUrl.includes('r2.dev')) return;
+        try {
+            const encoded = encodeURIComponent(imageUrl);
+            const headers = {};
+            if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+            await fetch(`${API_BASE_URL}/admin/assets?url=${encoded}`, { method: 'DELETE', headers });
+        } catch (_) {
+            console.warn('Xoa anh R2 that bai:', imageUrl);
+        }
+    };
+
     const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
             const requestBody = typeof payload === 'string'
@@ -433,6 +446,7 @@ export const AppProvider = ({ children }) => {
             updateProduct,
             deleteProduct,
             uploadProductImage,
+            deleteProductImageFromR2,
             fetchProductDetail,
             login,
             fetchOrders,

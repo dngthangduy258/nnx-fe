@@ -7,7 +7,7 @@ import Button from '../../components/common/Button';
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, getProductImageUrl, fetchProductDetail } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, getProductImageUrl, fetchProductDetail } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,10 +104,14 @@ const AdminProducts = () => {
     };
 
     const removeImageAt = (index) => {
+        const item = imageItems[index];
+        if (item?.url && !item.url.startsWith('blob:') && item.url.includes('r2.dev')) {
+            deleteProductImageFromR2(item.url);
+        }
         setImageItems((prev) => {
             const next = prev.filter((_, i) => i !== index);
-            const item = prev[index];
-            if (item?.file && item?.url?.startsWith('blob:')) URL.revokeObjectURL(item.url);
+            const removed = prev[index];
+            if (removed?.file && removed?.url?.startsWith('blob:')) URL.revokeObjectURL(removed.url);
             return next;
         });
         setMainImageIndex((prev) => {
