@@ -105,14 +105,14 @@ const AdminProducts = () => {
     };
 
     const handleAnalyzeImage = async () => {
-        const firstWithFile = imageItems.find((item) => item.file);
-        if (!firstWithFile?.file) {
+        const files = imageItems.filter((item) => item.file).map((item) => item.file);
+        if (!files.length) {
             alert('Vui long them it nhat mot anh (chup hoac chon file) truoc khi phan tich.');
             return;
         }
         setAnalyzingImage(true);
         try {
-            const res = await analyzeProductImage(firstWithFile.file);
+            const res = await analyzeProductImage(files);
             setFormData((prev) => ({
                 ...prev,
                 name: res.name ?? prev.name,

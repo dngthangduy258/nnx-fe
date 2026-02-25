@@ -352,9 +352,12 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const analyzeProductImage = async (imageFile) => {
+    const analyzeProductImage = async (imageOrImages) => {
+        const files = Array.isArray(imageOrImages) ? imageOrImages : [imageOrImages];
+        const validFiles = files.filter(Boolean);
+        if (!validFiles.length) return { name: '', description: '', category: '', suggestedPrice: 0 };
         const formData = new FormData();
-        formData.append('image', imageFile);
+        validFiles.forEach((file) => formData.append('image', file));
         const headers = {};
         if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
         const response = await fetch(`${API_BASE_URL}/admin/products/analyze-image`, {
