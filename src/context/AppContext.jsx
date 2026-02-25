@@ -352,6 +352,27 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const analyzeProductImage = async (imageFile) => {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        const headers = {};
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const response = await fetch(`${API_BASE_URL}/admin/products/analyze-image`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Phan tich anh that bai');
+        }
+        return response.json();
+    };
+
     const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
             const requestBody = typeof payload === 'string'
@@ -447,6 +468,7 @@ export const AppProvider = ({ children }) => {
             deleteProduct,
             uploadProductImage,
             deleteProductImageFromR2,
+            analyzeProductImage,
             fetchProductDetail,
             login,
             fetchOrders,

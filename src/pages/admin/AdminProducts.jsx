@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, getProductImageUrl, fetchProductDetail } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, analyzeProductImage, getProductImageUrl, fetchProductDetail } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +26,7 @@ const AdminProducts = () => {
     const [mainImageIndex, setMainImageIndex] = useState(0);
     const [uploading, setUploading] = useState(false);
     const [loadingDetail, setLoadingDetail] = useState(false);
+    const [analyzingImage, setAnalyzingImage] = useState(false);
 
     const normalizeProductFormData = (product = {}) => ({
         ...product,
@@ -101,6 +102,29 @@ const AdminProducts = () => {
         setImageItems((prev) => [...prev, ...newItems]);
         if (imageItems.length === 0) setMainImageIndex(0);
         e.target.value = '';
+    };
+
+    const handleAnalyzeImage = async () => {
+        const firstWithFile = imageItems.find((item) => item.file);
+        if (!firstWithFile?.file) {
+            alert('Vui long them it nhat mot anh (chup hoac chon file) truoc khi phan tich.');
+            return;
+        }
+        setAnalyzingImage(true);
+        try {
+            const res = await analyzeProductImage(firstWithFile.file);
+            setFormData((prev) => ({
+                ...prev,
+                name: res.name ?? prev.name,
+                description: res.description ?? prev.description,
+                category: res.category && categories.some((c) => c.id === res.category) ? res.category : prev.category,
+                price: res.suggestedPrice > 0 ? String(res.suggestedPrice) : prev.price
+            }));
+        } catch (e) {
+            alert(e?.message || 'Phan tich anh that bai.');
+        } finally {
+            setAnalyzingImage(false);
+        }
     };
 
     const removeImageAt = (index) => {
@@ -333,12 +357,23 @@ const AdminProducts = () => {
                                         id="product-images-input"
                                         onChange={handleAddImages}
                                     />
-                                    <label
-                                        htmlFor="product-images-input"
-                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm font-medium text-gray-600"
-                                    >
-                                        <ImagePlus className="w-4 h-4" /> Thêm ảnh
-                                    </label>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                        <label
+                                            htmlFor="product-images-input"
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm font-medium text-gray-600"
+                                        >
+                                            <ImagePlus className="w-4 h-4" /> Thêm ảnh
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={handleAnalyzeImage}
+                                            disabled={analyzingImage || !imageItems.some((i) => i.file)}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            {analyzingImage ? 'Đang phân tích...' : 'Điền nhanh từ ảnh (AI)'}
+                                        </button>
+                                    </div>
                                     <div className="flex flex-wrap gap-3 mt-3">
                                         {imageItems.map((item, index) => (
                                             <div
