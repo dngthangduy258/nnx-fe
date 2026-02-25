@@ -295,6 +295,12 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const fetchProductDetail = async (productId) => {
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+        if (!response.ok) throw new Error('Khong tai duoc chi tiet san pham');
+        return response.json();
+    };
+
     const deleteProduct = async (productId) => {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
@@ -427,6 +433,7 @@ export const AppProvider = ({ children }) => {
             updateProduct,
             deleteProduct,
             uploadProductImage,
+            fetchProductDetail,
             login,
             fetchOrders,
             updateOrderStatus,

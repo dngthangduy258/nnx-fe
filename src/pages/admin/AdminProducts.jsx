@@ -7,7 +7,7 @@ import Button from '../../components/common/Button';
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, getProductImageUrl } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, getProductImageUrl, fetchProductDetail } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +25,7 @@ const AdminProducts = () => {
     const [imageItems, setImageItems] = useState([]);
     const [mainImageIndex, setMainImageIndex] = useState(0);
     const [uploading, setUploading] = useState(false);
+    const [loadingDetail, setLoadingDetail] = useState(false);
 
     const normalizeProductFormData = (product = {}) => ({
         ...product,
@@ -50,22 +51,35 @@ const AdminProducts = () => {
         return urls.map((url) => ({ url, file: null }));
     };
 
-    const handleOpenModal = (product = null) => {
+    const handleOpenModal = async (product = null) => {
         if (product) {
+            setLoadingDetail(true);
+            setIsModalOpen(true);
             setEditingProduct(product);
             setFormData(normalizeProductFormData(product));
-            const items = buildImageItemsFromProduct(product);
-            setImageItems(items.length ? items : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
-            const mainUrl = product.image || product.images?.[0];
-            const mainIdx = mainUrl ? items.findIndex((i) => i.url === mainUrl) : 0;
-            setMainImageIndex(mainIdx >= 0 ? mainIdx : 0);
+            setImageItems(buildImageItemsFromProduct(product).length ? buildImageItemsFromProduct(product) : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
+            setMainImageIndex(0);
+            try {
+                const full = await fetchProductDetail(product.id);
+                const items = buildImageItemsFromProduct(full);
+                setFormData(normalizeProductFormData(full));
+                setImageItems(items.length ? items : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
+                const mainUrl = full.image || full.images?.[0];
+                const mainIdx = mainUrl ? items.findIndex((i) => i.url === mainUrl) : 0;
+                setMainImageIndex(mainIdx >= 0 ? mainIdx : 0);
+            } catch (_) {
+                const items = buildImageItemsFromProduct(product);
+                setImageItems(items.length ? items : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
+            } finally {
+                setLoadingDetail(false);
+            }
         } else {
             setEditingProduct(null);
             setFormData(normalizeProductFormData());
             setImageItems([]);
             setMainImageIndex(0);
         }
-        setIsModalOpen(true);
+        if (!product) setIsModalOpen(true);
     };
 
     useEffect(() => {
@@ -245,6 +259,12 @@ const AdminProducts = () => {
                                 {editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
                             </h2>
 
+                            {loadingDetail ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                                    <p className="font-medium">Đang tải chi tiết sản phẩm...</p>
+                                </div>
+                            ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
@@ -361,6 +381,7 @@ const AdminProducts = () => {
                                     </Button>
                                 </div>
                             </form>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
