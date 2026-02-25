@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
 const Cart = () => {
-    const { cart, removeFromCart, updateCartQuantity, checkout } = useApp();
+    const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl } = useApp();
     const [isOrderPlaced, setIsOrderPlaced] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
@@ -81,7 +81,7 @@ const Cart = () => {
                                         className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
                                     >
                                         <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            <img src={getProductImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 text-center sm:text-left">
                                             <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>

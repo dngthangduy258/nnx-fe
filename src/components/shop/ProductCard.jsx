@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MapPin } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 const ProductCard = ({ product }) => {
+    const { getProductImageUrl } = useApp();
     // Generate some random plausible stats based on ID for demo purposes
     const idStr = String(product.id);
     const soldCount = (idStr.charCodeAt(0) * 12) + 34;
@@ -19,7 +21,7 @@ const ProductCard = ({ product }) => {
             {/* Image Section */}
             <div className="relative aspect-square bg-[#f5f5f5] w-full overflow-hidden">
                 <img
-                    src={product.image}
+                    src={getProductImageUrl(product.image)}
                     alt={product.name}
                     className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:opacity-100 transition-opacity"
                     onError={(e) => {

@@ -6,6 +6,16 @@ const AppContext = createContext();
 const baseFromEnv = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787';
 export const API_BASE_URL = baseFromEnv.endsWith('/api') ? baseFromEnv : `${baseFromEnv}/api`;
 
+/** Chuyen URL anh R2 (r2.dev) sang proxy qua BE de tranh 404/ORB khi bucket chua public. */
+export const getProductImageUrl = (url) => {
+    if (!url) return url;
+    try {
+        const u = new URL(url);
+        if (u.hostname.includes('r2.dev')) return `${API_BASE_URL}/assets/${u.pathname.replace(/^\//, '')}`;
+    } catch (_) {}
+    return url;
+};
+
 export const AppProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -300,6 +310,28 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const uploadProductImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const response = await fetch(`${API_BASE_URL}/admin/upload`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Upload anh that bai');
+        }
+        const data = await response.json();
+        return data.url;
+    };
+
     const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
             const requestBody = typeof payload === 'string'
@@ -393,6 +425,7 @@ export const AppProvider = ({ children }) => {
             addProduct,
             updateProduct,
             deleteProduct,
+            uploadProductImage,
             login,
             fetchOrders,
             updateOrderStatus,
@@ -401,7 +434,8 @@ export const AppProvider = ({ children }) => {
             updateCategory,
             deleteCategory,
             fetchData,
-            logout
+            logout,
+            getProductImageUrl
         }}>
             {children}
         </AppContext.Provider>

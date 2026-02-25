@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
+const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
+
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, getProductImageUrl } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,9 +18,13 @@ const AdminProducts = () => {
         category: 'pesticides',
         stock: '',
         description: '',
-        image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600',
+        image: DEFAULT_PLACEHOLDER,
+        images: [],
         rating: 5.0
     });
+    const [imageItems, setImageItems] = useState([]);
+    const [mainImageIndex, setMainImageIndex] = useState(0);
+    const [uploading, setUploading] = useState(false);
 
     const normalizeProductFormData = (product = {}) => ({
         ...product,
@@ -27,7 +33,8 @@ const AdminProducts = () => {
         category: product.category || 'pesticides',
         stock: product.stock ?? product.amount ?? '',
         description: product.description || '',
-        image: product.image || 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600',
+        image: product.image || DEFAULT_PLACEHOLDER,
+        images: Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []),
         rating: product.rating ?? 5.0
     });
 
@@ -37,26 +44,98 @@ const AdminProducts = () => {
         return matchesSearch && matchesCategory;
     });
 
+    const buildImageItemsFromProduct = (product) => {
+        const normalized = normalizeProductFormData(product);
+        const urls = normalized.images?.length ? normalized.images : (normalized.image ? [normalized.image] : []);
+        return urls.map((url) => ({ url, file: null }));
+    };
+
     const handleOpenModal = (product = null) => {
         if (product) {
             setEditingProduct(product);
             setFormData(normalizeProductFormData(product));
+            const items = buildImageItemsFromProduct(product);
+            setImageItems(items.length ? items : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
+            const mainUrl = product.image || product.images?.[0];
+            const mainIdx = mainUrl ? items.findIndex((i) => i.url === mainUrl) : 0;
+            setMainImageIndex(mainIdx >= 0 ? mainIdx : 0);
         } else {
             setEditingProduct(null);
             setFormData(normalizeProductFormData());
+            setImageItems([]);
+            setMainImageIndex(0);
         }
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e) => {
+    useEffect(() => {
+        if (!isModalOpen) return;
+        return () => {
+            imageItems.forEach((item) => {
+                if (item.file && item.url?.startsWith('blob:')) URL.revokeObjectURL(item.url);
+            });
+        };
+    }, [isModalOpen]);
+
+    const handleAddImages = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        const newItems = files.map((file) => ({
+            url: URL.createObjectURL(file),
+            file
+        }));
+        setImageItems((prev) => [...prev, ...newItems]);
+        if (imageItems.length === 0) setMainImageIndex(0);
+        e.target.value = '';
+    };
+
+    const removeImageAt = (index) => {
+        setImageItems((prev) => {
+            const next = prev.filter((_, i) => i !== index);
+            const item = prev[index];
+            if (item?.file && item?.url?.startsWith('blob:')) URL.revokeObjectURL(item.url);
+            return next;
+        });
+        setMainImageIndex((prev) => {
+            if (prev === index) return 0;
+            if (prev > index) return prev - 1;
+            return prev;
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = { ...formData, price: Number(formData.price), stock: Number(formData.stock) };
-        if (editingProduct) {
-            updateProduct(data);
-        } else {
-            addProduct(data);
+        setUploading(true);
+        try {
+            const allUrls = [];
+            for (const item of imageItems) {
+                if (item.file) {
+                    const url = await uploadProductImage(item.file);
+                    allUrls.push(url);
+                } else if (item.url && !item.url.startsWith('blob:')) {
+                    allUrls.push(item.url);
+                }
+            }
+            const mainUrl = allUrls[mainImageIndex] || allUrls[0] || DEFAULT_PLACEHOLDER;
+            const data = {
+                ...formData,
+                price: Number(formData.price),
+                stock: Number(formData.stock),
+                image: mainUrl,
+                images: allUrls.length ? allUrls : [mainUrl]
+            };
+            if (editingProduct) {
+                await updateProduct({ ...data, id: editingProduct.id });
+            } else {
+                await addProduct(data);
+            }
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert(err?.message || 'Co loi khi luu san pham');
+        } finally {
+            setUploading(false);
         }
-        setIsModalOpen(false);
     };
 
     return (
@@ -112,7 +191,7 @@ const AdminProducts = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                                <img src={p.image} alt="" className="w-full h-full object-cover" />
+                                                <img src={getProductImageUrl(p.image)} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <span className="font-bold text-gray-700">{p.name}</span>
                                         </div>
@@ -218,9 +297,67 @@ const AdminProducts = () => {
                                     />
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-500 flex items-center gap-2">
+                                        <ImagePlus className="w-4 h-4" /> Ảnh sản phẩm (nhiều ảnh, chọn ảnh đại diện)
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                        multiple
+                                        className="hidden"
+                                        id="product-images-input"
+                                        onChange={handleAddImages}
+                                    />
+                                    <label
+                                        htmlFor="product-images-input"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm font-medium text-gray-600"
+                                    >
+                                        <ImagePlus className="w-4 h-4" /> Thêm ảnh
+                                    </label>
+                                    <div className="flex flex-wrap gap-3 mt-3">
+                                        {imageItems.map((item, index) => (
+                                            <div
+                                                key={index}
+                                                className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100 group"
+                                            >
+                                                <img
+                                                    src={item.url?.startsWith('blob:') ? item.url : getProductImageUrl(item.url)}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                {mainImageIndex === index && (
+                                                    <span className="absolute top-0 left-0 right-0 bg-primary/90 text-white text-[10px] font-bold py-0.5 flex items-center justify-center gap-0.5">
+                                                        <Star className="w-3 h-3" /> Đại diện
+                                                    </span>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setMainImageIndex(index)}
+                                                        className="p-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 hover:bg-primary hover:text-white"
+                                                    >
+                                                        Đại diện
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeImageAt(index)}
+                                                        className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {imageItems.length === 0 && (
+                                        <p className="text-xs text-gray-400">Chưa có ảnh. Bấm &quot;Thêm ảnh&quot; và chọn ảnh đại diện trước khi lưu.</p>
+                                    )}
+                                </div>
+
                                 <div className="pt-4">
-                                    <Button type="submit" size="lg" className="w-full">
-                                        {editingProduct ? 'Cập nhật sản phẩm' : 'Lưu sản phẩm'}
+                                    <Button type="submit" size="lg" className="w-full" disabled={uploading}>
+                                        {uploading ? 'Đang tải ảnh...' : (editingProduct ? 'Cập nhật sản phẩm' : 'Lưu sản phẩm')}
                                     </Button>
                                 </div>
                             </form>

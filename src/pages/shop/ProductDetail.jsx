@@ -9,7 +9,7 @@ import ProductCard from '../../components/shop/ProductCard';
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { products, loading, addToCart } = useApp();
+    const { products, loading, addToCart, getProductImageUrl } = useApp();
     const [quantity, setQuantity] = useState(1);
 
     if (loading) {
@@ -61,7 +61,7 @@ const ProductDetail = () => {
                         className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg"
                     >
                         <img
-                            src={product.image}
+                            src={getProductImageUrl(product.image)}
                             alt={product.name}
                             className="w-full h-full object-cover"
                         />
