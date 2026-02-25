@@ -352,6 +352,7 @@ const AdminProducts = () => {
                                     <input
                                         type="file"
                                         accept="image/jpeg,image/png,image/gif,image/webp"
+                                        capture="environment"
                                         multiple
                                         className="hidden"
                                         id="product-images-input"
