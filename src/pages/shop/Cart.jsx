@@ -1,15 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
+import SearchableSelect from '../../components/common/SearchableSelect';
+import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
 
 const Cart = () => {
     const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl } = useApp();
     const [isOrderPlaced, setIsOrderPlaced] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
+    const [addressType, setAddressType] = useState('old'); // 'old' | 'new'
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        phone: '',
+        provinceId: '',
+        districtId: '',
+        wardId: '',
+        streetAddress: ''
+    });
+
+    const addresses = addressType === 'old' ? addressesOld : addressesNew;
+    const selectedProvince = useMemo(() => addresses.find(p => p.id === customerInfo.provinceId), [addresses, customerInfo.provinceId]);
+    const selectedDistrict = useMemo(() => selectedProvince?.districts?.find(d => d.id === customerInfo.districtId), [selectedProvince, customerInfo.districtId]);
+    const isNewFormat = addressType === 'new';
+    const districts = selectedProvince?.districts ?? [];
+    const wards = isNewFormat ? (selectedProvince?.wards ?? []) : (selectedDistrict?.wards ?? []);
+
+    const buildAddressString = () => {
+        const parts = [];
+        if (customerInfo.streetAddress?.trim()) parts.push(customerInfo.streetAddress.trim());
+        const ward = isNewFormat
+            ? selectedProvince?.wards?.find(w => w.id === customerInfo.wardId)
+            : selectedDistrict?.wards?.find(w => w.id === customerInfo.wardId);
+        if (ward) parts.push(ward.name);
+        if (!isNewFormat && selectedDistrict) parts.push(selectedDistrict.name);
+        if (selectedProvince) parts.push(selectedProvince.name);
+        return parts.join(', ');
+    };
     const [orderData, setOrderData] = useState(null);
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -20,9 +49,17 @@ const Cart = () => {
         e.preventDefault();
         if (cart.length === 0) return;
 
+        const address = buildAddressString();
+        const msg = isNewFormat ? 'Vui lòng chọn Tỉnh/Thành phố và Xã/Phường.'
+            : 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Xã/Phường.';
+        if (!address?.trim()) {
+            alert(msg);
+            return;
+        }
+
         try {
             setIsLoading(true);
-            const result = await checkout(customerInfo);
+            const result = await checkout({ ...customerInfo, address });
             setOrderData(result);
             setIsOrderPlaced(true);
         } catch (err) {
@@ -30,6 +67,23 @@ const Cart = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleAddressTypeChange = (type) => {
+        setAddressType(type);
+        setCustomerInfo(prev => ({ ...prev, provinceId: '', districtId: '', wardId: '' }));
+    };
+
+    const handleProvinceChange = (id) => {
+        setCustomerInfo(prev => ({ ...prev, provinceId: id, districtId: '', wardId: '' }));
+    };
+
+    const handleWardChange = (id) => {
+        setCustomerInfo(prev => ({ ...prev, wardId: id }));
+    };
+
+    const handleDistrictChange = (id) => {
+        setCustomerInfo(prev => ({ ...prev, districtId: id, wardId: '' }));
     };
 
     if (isOrderPlaced) {
@@ -149,13 +203,81 @@ const Cart = () => {
                                         value={customerInfo.phone}
                                         onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                                     />
-                                    <textarea
-                                        required
-                                        placeholder="Địa chỉ nhận hàng"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none h-24 resize-none"
-                                        value={customerInfo.address}
-                                        onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
-                                    ></textarea>
+
+                                    <div className="space-y-3">
+                                        <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            <MapPin className="w-4 h-4" /> Địa chỉ nhận hàng
+                                        </p>
+                                        <>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="addressType"
+                                                    checked={addressType === 'old'}
+                                                    onChange={() => handleAddressTypeChange('old')}
+                                                    className="text-primary"
+                                                />
+                                                <span className="text-sm">Đơn vị hành chính cũ</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="addressType"
+                                                    checked={addressType === 'new'}
+                                                    onChange={() => handleAddressTypeChange('new')}
+                                                    className="text-primary"
+                                                />
+                                                <span className="text-sm">Đơn vị hành chính mới</span>
+                                            </label>
+                                        </div>
+
+                                        <SearchableSelect
+                                            required
+                                            options={addresses}
+                                            value={customerInfo.provinceId}
+                                            onChange={handleProvinceChange}
+                                            placeholder="Chọn Tỉnh / Thành phố"
+                                            searchPlaceholder="Gõ để tìm (vd: ca → Cà Mau)"
+                                            getOptionLabel={(o) => o.name}
+                                            getOptionValue={(o) => o.id}
+                                        />
+
+                                        {!isNewFormat && (
+                                            <SearchableSelect
+                                                required
+                                                options={districts}
+                                                value={customerInfo.districtId}
+                                                onChange={handleDistrictChange}
+                                                placeholder="Chọn Quận / Huyện"
+                                                searchPlaceholder="Gõ để tìm..."
+                                                disabled={!customerInfo.provinceId}
+                                                getOptionLabel={(o) => o.name}
+                                                getOptionValue={(o) => o.id}
+                                            />
+                                        )}
+
+                                        <SearchableSelect
+                                            required
+                                            options={wards}
+                                            value={customerInfo.wardId}
+                                            onChange={handleWardChange}
+                                            placeholder="Chọn Xã / Phường"
+                                            searchPlaceholder="Gõ để tìm..."
+                                            disabled={!customerInfo.provinceId}
+                                            getOptionLabel={(o) => o.name}
+                                            getOptionValue={(o) => o.id}
+                                        />
+
+                                        <input
+                                            type="text"
+                                            placeholder="Số nhà, tên đường (tùy chọn)"
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                            value={customerInfo.streetAddress}
+                                            onChange={(e) => setCustomerInfo({ ...customerInfo, streetAddress: e.target.value })}
+                                        />
+                                        </>
+                                    </div>
 
                                     <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
                                         {isLoading ? 'Đang xử lý...' : 'Gửi Đơn Hàng'} <ArrowRight className="w-5 h-5" />
