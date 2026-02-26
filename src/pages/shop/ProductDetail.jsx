@@ -9,7 +9,7 @@ import ProductCard from '../../components/shop/ProductCard';
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { products, loading, addToCart, getProductImageUrl } = useApp();
+    const { products, categories, loading, addToCart, getProductImageUrl } = useApp();
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -36,6 +36,9 @@ const ProductDetail = () => {
     const relatedProducts = products
         .filter(p => p.category === product.category && p.id !== product.id)
         .slice(0, 4);
+
+    const categoryName =
+        categories?.find((c) => c.id === product.category)?.name || product.category;
 
     const allImages = product.images?.length
         ? product.images
@@ -102,8 +105,8 @@ const ProductDetail = () => {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                     >
-                        <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-4 uppercase">
-                            {product.category}
+                        <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-4">
+                            {categoryName}
                         </span>
                         <h1 className="text-4xl font-extrabold text-primary-dark mb-2">{product.name}</h1>
 

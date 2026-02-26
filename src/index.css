@@ -2,14 +2,11 @@
 
 @theme {
     --color-primary: #16a34a;
-    /* Tailwind Green 600 */
     --color-primary-dark: #15803d;
-    /* Tailwind Green 700 */
     --color-secondary: #ea580c;
-    /* Tailwind Orange 600 */
     --color-secondary-light: #f97316;
-    /* Tailwind Orange 500 */
-    --font-sans: 'Roboto', 'Plus Jakarta Sans', sans-serif;
+    /* Be Vietnam Pro: font tiếng Việt, dấu (ộ, ơ, ư...) hiển thị đúng */
+    --font-sans: 'Be Vietnam Pro', system-ui, sans-serif;
 }
 
 @layer base {
@@ -21,10 +18,10 @@
 
     body {
         background-color: #f3f4f6;
-        /* Tailwind Gray 100 */
         color: #1f2937;
-        /* Tailwind Gray 800 */
         -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 }
 
