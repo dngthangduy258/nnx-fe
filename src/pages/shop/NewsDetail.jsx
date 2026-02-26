@@ -78,7 +78,7 @@ const NewsDetail = () => {
                                     remarkPlugins={[remarkGfm]}
                                     components={{
                                         table: ({ node, ...props }) => (
-                                            <div className="table-wrap">
+                                            <div className="overflow-x-auto my-3">
                                                 <table {...props} />
                                             </div>
                                         ),

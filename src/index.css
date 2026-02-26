@@ -53,9 +53,8 @@
     .news-content a:hover { color: var(--color-primary-dark); }
     .news-content blockquote { border-left: 4px solid var(--color-primary); padding-left: 1rem; margin: 0.75rem 0; color: #4b5563; }
     .news-content code { background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.9em; }
-    .news-content pre { background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x-auto; margin: 0.75rem 0; }
+    .news-content pre { background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; margin: 0.75rem 0; overflow-x: auto; }
     .news-content pre code { background: none; padding: 0; }
-    .news-content .table-wrap { overflow-x: auto; margin: 0.75rem 0; }
     .news-content table {
         width: 100%;
         min-width: 300px;
