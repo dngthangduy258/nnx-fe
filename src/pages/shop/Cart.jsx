@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 import SearchableSelect from '../../components/common/SearchableSelect';
@@ -40,49 +40,83 @@ const Cart = () => {
         return parts.join(', ');
     };
     const [orderData, setOrderData] = useState(null);
+    const [formError, setFormError] = useState('');
+    const [showReview, setShowReview] = useState(false);
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = subtotal > 1000000 ? 0 : 35000;
     const total = subtotal + shipping;
 
-    const handleCheckout = async (e) => {
+    const validateForm = () => {
+        if (!customerInfo.name?.trim()) {
+            setFormError('Vui lòng nhập họ và tên.');
+            return false;
+        }
+        if (!customerInfo.phone?.trim()) {
+            setFormError('Vui lòng nhập số điện thoại.');
+            return false;
+        }
+        if (!customerInfo.provinceId) {
+            setFormError('Vui lòng chọn Tỉnh/Thành phố.');
+            return false;
+        }
+        if (!isNewFormat && !customerInfo.districtId) {
+            setFormError('Vui lòng chọn Quận/Huyện.');
+            return false;
+        }
+        if (!customerInfo.wardId) {
+            setFormError('Vui lòng chọn Xã/Phường.');
+            return false;
+        }
+        if (!customerInfo.streetAddress?.trim()) {
+            setFormError('Vui lòng nhập số nhà, tên đường.');
+            return false;
+        }
+        setFormError('');
+        return true;
+    };
+
+    const handleReviewStep = (e) => {
         e.preventDefault();
         if (cart.length === 0) return;
+        if (!validateForm()) return;
+        setShowReview(true);
+    };
 
+    const handleConfirmOrder = async () => {
+        if (cart.length === 0) return;
         const address = buildAddressString();
-        const msg = isNewFormat ? 'Vui lòng chọn Tỉnh/Thành phố và Xã/Phường.'
-            : 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Xã/Phường.';
-        if (!address?.trim()) {
-            alert(msg);
-            return;
-        }
-
         try {
             setIsLoading(true);
             const result = await checkout({ ...customerInfo, address });
             setOrderData(result);
             setIsOrderPlaced(true);
         } catch (err) {
-            alert(err.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+            setFormError(err.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+            setShowReview(false);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleAddressTypeChange = (type) => {
+        setFormError('');
         setAddressType(type);
         setCustomerInfo(prev => ({ ...prev, provinceId: '', districtId: '', wardId: '' }));
     };
 
     const handleProvinceChange = (id) => {
+        setFormError('');
         setCustomerInfo(prev => ({ ...prev, provinceId: id, districtId: '', wardId: '' }));
     };
 
     const handleWardChange = (id) => {
+        setFormError('');
         setCustomerInfo(prev => ({ ...prev, wardId: id }));
     };
 
     const handleDistrictChange = (id) => {
+        setFormError('');
         setCustomerInfo(prev => ({ ...prev, districtId: id, wardId: '' }));
     };
 
@@ -186,22 +220,28 @@ const Cart = () => {
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleCheckout} className="space-y-4">
+                                {!showReview ? (
+                                <form onSubmit={handleReviewStep} noValidate className="space-y-4">
+                                    {formError && (
+                                        <div role="alert" className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-800 text-sm flex items-center gap-3 shadow-sm">
+                                            <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                                            <span className="flex-1 font-medium">{formError}</span>
+                                            <button type="button" onClick={() => setFormError('')} className="text-amber-600 hover:text-amber-800 font-medium underline">Đóng</button>
+                                        </div>
+                                    )}
                                     <input
-                                        required
                                         type="text"
                                         placeholder="Họ và tên"
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
                                         value={customerInfo.name}
-                                        onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                                        onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, name: e.target.value }); }}
                                     />
                                     <input
-                                        required
                                         type="tel"
                                         placeholder="Số điện thoại"
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
                                         value={customerInfo.phone}
-                                        onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                                        onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, phone: e.target.value }); }}
                                     />
 
                                     <div className="space-y-3">
@@ -233,7 +273,6 @@ const Cart = () => {
                                         </div>
 
                                         <SearchableSelect
-                                            required
                                             options={addresses}
                                             value={customerInfo.provinceId}
                                             onChange={handleProvinceChange}
@@ -245,7 +284,6 @@ const Cart = () => {
 
                                         {!isNewFormat && (
                                             <SearchableSelect
-                                                required
                                                 options={districts}
                                                 value={customerInfo.districtId}
                                                 onChange={handleDistrictChange}
@@ -258,7 +296,6 @@ const Cart = () => {
                                         )}
 
                                         <SearchableSelect
-                                            required
                                             options={wards}
                                             value={customerInfo.wardId}
                                             onChange={handleWardChange}
@@ -271,18 +308,59 @@ const Cart = () => {
 
                                         <input
                                             type="text"
-                                            placeholder="Số nhà, tên đường (tùy chọn)"
+                                            placeholder="Số nhà, tên đường (bắt buộc)"
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
                                             value={customerInfo.streetAddress}
-                                            onChange={(e) => setCustomerInfo({ ...customerInfo, streetAddress: e.target.value })}
+                                            onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, streetAddress: e.target.value }); }}
                                         />
                                         </>
                                     </div>
 
                                     <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
-                                        {isLoading ? 'Đang xử lý...' : 'Gửi Đơn Hàng'} <ArrowRight className="w-5 h-5" />
+                                        Xem lại & Xác nhận <ArrowRight className="w-5 h-5" />
                                     </Button>
                                 </form>
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-4"
+                                    >
+                                        <h3 className="font-bold text-gray-800">Xác nhận thông tin đơn hàng</h3>
+                                        <div className="space-y-2 text-sm max-h-32 overflow-y-auto">
+                                            {cart.map((item) => (
+                                                <div key={item.id} className="flex justify-between gap-2">
+                                                    <span className="truncate">{item.name}</span>
+                                                    <span className="flex-shrink-0">{item.quantity} × {item.price.toLocaleString('vi-VN')} đ</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <p><span className="text-text-muted">Người nhận:</span> <strong>{customerInfo.name}</strong></p>
+                                            <p><span className="text-text-muted">SĐT:</span> <strong>{customerInfo.phone}</strong></p>
+                                            <p><span className="text-text-muted">Địa chỉ:</span> <strong>{buildAddressString()}</strong></p>
+                                        </div>
+                                        <div className="space-y-2 text-sm border-t border-gray-200 pt-3">
+                                            <div className="flex justify-between"><span className="text-text-muted">Tạm tính</span><span>{subtotal.toLocaleString('vi-VN')} đ</span></div>
+                                            <div className="flex justify-between"><span className="text-text-muted">Phí vận chuyển</span><span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')} đ`}</span></div>
+                                            <div className="flex justify-between font-bold text-base pt-1"><span>Tổng cộng</span><span className="text-primary">{total.toLocaleString('vi-VN')} đ</span></div>
+                                        </div>
+                                        {formError && (
+                                            <div role="alert" className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2">
+                                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                <span className="flex-1">{formError}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-3">
+                                            <Button variant="outline" className="flex-1" onClick={() => { setShowReview(false); setFormError(''); }}>
+                                                Quay lại sửa
+                                            </Button>
+                                            <Button variant="primary" className="flex-1" onClick={handleConfirmOrder} disabled={isLoading}>
+                                                {isLoading ? 'Đang xử lý...' : 'Xác nhận đặt hàng'} <ArrowRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
 
                                 <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-text-muted uppercase font-bold text-center">
                                     <CreditCard className="w-4 h-4" /> Thanh toán khi nhận hàng (COD)

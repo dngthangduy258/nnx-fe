@@ -220,13 +220,10 @@ export const AppProvider = ({ children }) => {
                 })
             });
 
-            if (!response.ok) throw new Error('Khong the tao don hang');
-
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Không thể tạo đơn hàng');
 
             setCart([]);
-            // Note: Guest orders are not stored in local state anymore, 
-            // but returned for immediate success page display.
             return {
                 id: data.orderId,
                 trackingId: data.trackingId

@@ -108,10 +108,6 @@ const SearchableSelect = ({
                     </div>
                 </div>
             )}
-
-            {required && !value && !disabled && (
-                <input type="hidden" required value={value} readOnly />
-            )}
         </div>
     );
 };
