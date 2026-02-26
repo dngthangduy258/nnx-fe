@@ -11,6 +11,7 @@ const ProductDetail = () => {
     const navigate = useNavigate();
     const { products, loading, addToCart, getProductImageUrl } = useApp();
     const [quantity, setQuantity] = useState(1);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     if (loading) {
         return (
@@ -36,6 +37,13 @@ const ProductDetail = () => {
         .filter(p => p.category === product.category && p.id !== product.id)
         .slice(0, 4);
 
+    const allImages = product.images?.length
+        ? product.images
+        : (product.image ? [product.image] : []);
+    const mainImageUrl = allImages[selectedImageIndex]
+        ? getProductImageUrl(allImages[selectedImageIndex], false, product.category)
+        : getProductImageUrl(product.image, false, product.category);
+
     const handleAddToCart = () => {
         for (let i = 0; i < quantity; i++) {
             addToCart(product);
@@ -54,17 +62,39 @@ const ProductDetail = () => {
                 </button>
 
                 <div className="grid md:grid-cols-2 gap-12 mb-20">
-                    {/* Image Gallery */}
+                    {/* Image Gallery: ảnh đại diện + tất cả ảnh */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg"
+                        className="space-y-3"
                     >
-                        <img
-                            src={getProductImageUrl(product.image, false, product.category)}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                        />
+                        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg">
+                            <img
+                                src={mainImageUrl}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        {allImages.length > 1 && (
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                {allImages.map((url, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setSelectedImageIndex(idx)}
+                                        className={`flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden border-2 transition-colors ${
+                                            selectedImageIndex === idx ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <img
+                                            src={getProductImageUrl(url, false, product.category)}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
 
                     {/* Product Info */}

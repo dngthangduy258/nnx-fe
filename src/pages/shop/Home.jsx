@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { categories } from '../../data/categories';
 
@@ -43,7 +43,7 @@ const Home = () => {
     const loadMore = () => setVisibleCount(prev => prev + 12);
 
     const categoryOrder = categories.map(c => c.id);
-    const hotDealProducts = pickProductsBalancedByCategory(products, 6, categoryOrder);
+    const hotDealProducts = pickProductsBalancedByCategory(products, 7, categoryOrder);
     const suggestedProducts = pickProductsBalancedByCategory(products, visibleCount, categoryOrder);
 
     // Mock banners for e-commerce feel
@@ -113,8 +113,7 @@ const Home = () => {
                                 className="border-r border-b border-gray-100 flex flex-col items-center justify-center p-3 md:p-4 hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:z-10 transition-shadow bg-white cursor-pointer group"
                             >
                                 <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gray-50 flex items-center justify-center mb-2 overflow-hidden group-hover:scale-105 transition-transform">
-                                    {/* Mocking unique images for categories based on index */}
-                                    <img src={`https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=150&q=80&sig=${idx}`} className="w-full h-full object-cover opacity-80 mix-blend-multiply" alt={cat.name} />
+                                    <img src={getDefaultProductImageUrl(cat.id)} className="w-full h-full object-cover" alt={cat.name} />
                                 </div>
                                 <span className="text-xs md:text-sm text-center text-gray-700 font-medium break-words px-1 line-clamp-2 leading-tight h-[34px] group-hover:text-primary transition-colors">{cat.name}</span>
                             </Link>
@@ -140,7 +139,6 @@ const Home = () => {
                             <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group">
                                 <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative">
                                     <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
-                                    {/* Fake huge discount badge */}
                                     <div className="absolute top-0 right-0 bg-secondary/10 px-2 py-3 rounded-bl-sm">
                                         <div className="flex flex-col items-center leading-none text-secondary">
                                             <span className="text-[10px] font-bold">GIẢM</span>
@@ -148,8 +146,9 @@ const Home = () => {
                                         </div>
                                     </div>
                                 </div>
+                                <h3 className="text-xs md:text-sm font-medium text-gray-800 line-clamp-2 mb-1 min-h-[32px]" title={p.name}>{p.name}</h3>
+                                <p className="text-[10px] text-gray-500 capitalize mb-0.5">{categories.find(c => c.id === p.category)?.name || p.category}</p>
                                 <div className="text-center font-bold text-secondary text-sm md:text-base mb-1">{p.price.toLocaleString('vi-VN')} đ</div>
-                                {/* Progress bar mock for stock */}
                                 <div className="h-4 bg-secondary/20 rounded-full overflow-hidden relative">
                                     <div className="absolute top-0 left-0 bottom-0 bg-secondary w-2/3"></div>
                                     <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">Đã bán 120</div>
