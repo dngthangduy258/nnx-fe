@@ -134,10 +134,10 @@ const Home = () => {
                         </Link>
                     </div>
 
-                    <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar">
+                    <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar items-stretch">
                         {hotDealProducts.map(p => (
-                            <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group">
-                                <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative">
+                            <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group flex flex-col">
+                                <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative flex-shrink-0">
                                     <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
                                     <div className="absolute top-0 right-0 bg-secondary/10 px-2 py-3 rounded-bl-sm">
                                         <div className="flex flex-col items-center leading-none text-secondary">
@@ -146,12 +146,14 @@ const Home = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <h3 className="text-xs md:text-sm font-medium text-gray-800 line-clamp-2 mb-1 min-h-[32px]" title={p.name}>{p.name}</h3>
-                                <p className="text-[10px] text-gray-500 capitalize mb-0.5">{categories.find(c => c.id === p.category)?.name || p.category}</p>
-                                <div className="text-center font-bold text-secondary text-sm md:text-base mb-1">{p.price.toLocaleString('vi-VN')} đ</div>
-                                <div className="h-4 bg-secondary/20 rounded-full overflow-hidden relative">
-                                    <div className="absolute top-0 left-0 bottom-0 bg-secondary w-2/3"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">Đã bán 120</div>
+                                <div className="flex flex-col flex-1 min-h-0">
+                                    <h3 className="text-xs md:text-sm font-medium text-gray-800 line-clamp-2 h-10 leading-tight break-words" title={p.name}>{p.name}</h3>
+                                    <p className="text-[10px] text-gray-500 capitalize line-clamp-2 h-6 mt-0.5">{categories.find(c => c.id === p.category)?.name || p.category}</p>
+                                    <div className="text-center font-bold text-secondary text-sm md:text-base mt-1 flex-shrink-0">{p.price.toLocaleString('vi-VN')} đ</div>
+                                    <div className="h-4 bg-secondary/20 rounded-full overflow-hidden relative mt-1 flex-shrink-0">
+                                        <div className="absolute top-0 left-0 bottom-0 bg-secondary w-2/3"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">Đã bán 120</div>
+                                    </div>
                                 </div>
                             </Link>
                         ))}

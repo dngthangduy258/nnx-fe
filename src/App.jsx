@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import ScrollToTop from './components/ScrollToTop';
 import MainLayout from './components/layout/MainLayout';
 import Home from './pages/shop/Home';
 import ProductList from './pages/shop/ProductList';
@@ -20,6 +21,7 @@ function App() {
     return (
         <AppProvider>
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <ScrollToTop />
                 <div className="app-container">
                     <Routes>
                         {/* Shop Routes with MainLayout */}

@@ -47,15 +47,13 @@ const ProductCard = ({ product }) => {
                 </div>
             </div>
 
-            {/* Info Section */}
-            <div className="p-2 flex flex-col flex-grow">
-                {/* Title */}
-                <h3 className="text-xs md:text-sm text-gray-800 line-clamp-2 mb-1 min-h-[32px] md:min-h-[40px] leading-snug break-words">
+            {/* Info Section - fixed heights so cards align in grid */}
+            <div className="p-2 flex flex-col flex-grow min-h-0">
+                <h3 className="text-xs md:text-sm text-gray-800 line-clamp-2 h-10 leading-tight break-words mb-1">
                     {product.name}
                 </h3>
 
-                {/* Price Section */}
-                <div className="mt-1 flex flex-col">
+                <div className="min-h-[2rem] flex flex-col justify-center">
                     {discount > 0 ? (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs text-gray-400 line-through">₫{originalPrice.toLocaleString('vi-VN')}</span>
@@ -66,7 +64,6 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
 
-                {/* Stats & Footer */}
                 <div className="mt-auto pt-2 flex items-center justify-between text-[10px] md:text-[11px] text-gray-500">
                     <div className="flex items-center">
                         <Star className="w-2.5 h-2.5 md:w-3 md:h-3 fill-yellow-400 text-yellow-400" />
