@@ -609,6 +609,100 @@ export const AppProvider = ({ children }) => {
         clearAdminSession();
     };
 
+    // --- Tin tức (news) ---
+    const fetchNews = async (limit = 10, offset = 0) => {
+        const res = await fetch(`${API_BASE_URL}/news?limit=${limit}&offset=${offset}`);
+        if (!res.ok) throw new Error('Khong the tai tin tuc');
+        return res.json();
+    };
+
+    const fetchNewsById = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/news/${id}`);
+        if (!res.ok) throw new Error('Khong tim thay tin tuc');
+        return res.json();
+    };
+
+    const fetchAdminNews = async () => {
+        const res = await fetch(`${API_BASE_URL}/admin/news`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong the tai danh sach tin tuc');
+        return res.json();
+    };
+
+    const fetchAdminNewsById = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/admin/news/${id}`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong tim thay tin tuc');
+        return res.json();
+    };
+
+    const createNews = async (data) => {
+        const res = await fetch(`${API_BASE_URL}/admin/news`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Khong the dang tin');
+        }
+        return res.json();
+    };
+
+    const updateNews = async (id, data) => {
+        const res = await fetch(`${API_BASE_URL}/admin/news/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Khong the cap nhat tin');
+        }
+        return res.json();
+    };
+
+    const deleteNews = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/admin/news/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) throw new Error('Khong the xoa tin');
+        return res.json();
+    };
+
+    const setNewsPin = async (id, pin_to_top) => {
+        const res = await fetch(`${API_BASE_URL}/admin/news/${id}/pin`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ pin_to_top })
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) throw new Error('Khong the ghim tin');
+        return res.json();
+    };
+
     return (
         <AppContext.Provider value={{
             products,
@@ -650,7 +744,15 @@ export const AppProvider = ({ children }) => {
             deleteCategory,
             fetchData,
             logout,
-            getProductImageUrl
+            getProductImageUrl,
+            fetchNews,
+            fetchNewsById,
+            fetchAdminNews,
+            fetchAdminNewsById,
+            createNews,
+            updateNews,
+            deleteNews,
+            setNewsPin
         }}>
             {children}
         </AppContext.Provider>

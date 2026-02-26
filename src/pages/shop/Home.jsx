@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
+import { ChevronRight, Percent, Star, ShieldCheck, MapPin, Pin } from 'lucide-react';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { categories } from '../../data/categories';
@@ -37,8 +37,13 @@ function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
 }
 
 const Home = () => {
-    const { products, categories, getProductImageUrl } = useApp();
+    const { products, categories, getProductImageUrl, fetchNews } = useApp();
     const [visibleCount, setVisibleCount] = useState(12);
+    const [newsList, setNewsList] = useState([]);
+
+    useEffect(() => {
+        fetchNews(4, 0).then(setNewsList).catch(() => setNewsList([]));
+    }, [fetchNews]);
 
     const loadMore = () => setVisibleCount(prev => prev + 12);
 
@@ -121,6 +126,45 @@ const Home = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Tin tức nông nghiệp - compact, trọng tâm vẫn là sản phẩm */}
+            {newsList.length > 0 && (
+                <section className="container mx-auto px-2 md:px-0 mb-6">
+                    <div className="bg-white rounded-sm shadow-sm p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h2 className="text-lg font-bold text-primary border-b-2 border-primary pb-1">Tin tức nông nghiệp</h2>
+                            <Link to="/news" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                                Xem tất cả <ChevronRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {newsList.slice(0, 4).map((item) => (
+                                <Link
+                                    key={item.id}
+                                    to={`/news/${item.id}`}
+                                    className="block p-3 border border-gray-100 rounded hover:border-primary hover:bg-primary/5 transition-all group"
+                                >
+                                    <div className="aspect-video bg-gray-100 rounded overflow-hidden mb-2">
+                                        {item.image ? (
+                                            <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-2xl text-gray-400">📰</div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                        {item.pin_to_top ? <Pin className="w-3 h-3 text-primary" /> : null}
+                                        <span>{new Date(item.created_at).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-800 group-hover:text-primary line-clamp-2 mt-0.5">{item.title}</h3>
+                                </Link>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                            Cập nhật kiến thức — mua sắm sản phẩm tại <Link to="/products" className="text-primary font-medium">NNXAGRO</Link>
+                        </p>
+                    </div>
+                </section>
+            )}
 
             {/* Top Selling Products / Flash Deal Style */}
             <section className="container mx-auto px-2 md:px-0 mb-6">

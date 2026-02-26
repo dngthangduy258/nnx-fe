@@ -24,7 +24,7 @@ const Header = () => {
             <div className="hidden md:block bg-primary-dark">
                 <div className="container mx-auto px-4 flex justify-between items-center text-xs py-1.5 h-8">
                     <div className="flex gap-4">
-                        <Link to="/products" className="hover:text-gray-200">Kênh Chuyên Gia</Link>
+                        <Link to="/news" className="hover:text-gray-200">Tin tức / Kênh Chuyên Gia</Link>
                         <span className="text-white/50">|</span>
                         <Link to="/products" className="hover:text-gray-200">Tải ứng dụng NNX</Link>
                         <span className="text-white/50">|</span>
