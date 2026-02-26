@@ -21,7 +21,7 @@ const ProductCard = ({ product }) => {
             {/* Image Section */}
             <div className="relative aspect-square bg-[#f5f5f5] w-full overflow-hidden">
                 <img
-                    src={getProductImageUrl(product.image)}
+                    src={getProductImageUrl(product.image, false, product.category)}
                     alt={product.name}
                     className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:opacity-100 transition-opacity"
                     onError={(e) => {

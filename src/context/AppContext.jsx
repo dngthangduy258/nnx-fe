@@ -6,9 +6,19 @@ const AppContext = createContext();
 const baseFromEnv = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787';
 export const API_BASE_URL = baseFromEnv.endsWith('/api') ? baseFromEnv : `${baseFromEnv}/api`;
 
-/** Tra ve URL anh. Dung truc tiep link R2 khi bucket da public + CORS; neu can tranh ORB thi doi sang useProxy=true. */
-export const getProductImageUrl = (url, useProxy = false) => {
-    if (!url) return url;
+/** Anh mac dinh khi san pham khong co anh. Theo category: public/images/default-product-{category_id}.png; fallback: public/images/default-product.png */
+export const DEFAULT_PRODUCT_IMAGE = '/images/default-product.png';
+
+/** Tra ve URL anh mac dinh theo danh muc. VD: pesticides -> /images/default-product-pesticides.png */
+export const getDefaultProductImageUrl = (category) => {
+    if (!category || typeof category !== 'string') return DEFAULT_PRODUCT_IMAGE;
+    const safe = category.replace(/[^a-z0-9-_]/gi, '').slice(0, 50) || 'default';
+    return `/images/default-product-${safe}.png`;
+};
+
+/** Tra ve URL anh. useProxy: proxy R2; category: khi khong co url thi dung anh mac dinh theo danh muc. */
+export const getProductImageUrl = (url, useProxy = false, category = null) => {
+    if (!url || (typeof url === 'string' && !url.trim())) return getDefaultProductImageUrl(category);
     if (!useProxy) return url;
     try {
         const u = new URL(url);
@@ -339,6 +349,29 @@ export const AppProvider = ({ children }) => {
         return data.url;
     };
 
+    const uploadProductImages = async (files) => {
+        if (!files?.length) return [];
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) formData.append('file', files[i]);
+        const headers = {};
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const response = await fetch(`${API_BASE_URL}/admin/upload-bulk`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Upload anh hang loat that bai');
+        }
+        const data = await response.json();
+        return data.urls || [];
+    };
+
     const deleteProductImageFromR2 = async (imageUrl) => {
         if (!imageUrl || typeof imageUrl !== 'string' || imageUrl.startsWith('blob:')) return;
         if (!imageUrl.includes('r2.dev')) return;
@@ -393,6 +426,99 @@ export const AppProvider = ({ children }) => {
             throw new Error(data.error || 'Phan tich text that bai');
         }
         return response.json();
+    };
+
+    const searchMasterProducts = async (q) => {
+        const query = typeof q === 'string' ? q.trim().slice(0, 100) : '';
+        const response = await fetch(
+            `${API_BASE_URL}/admin/master-products?q=${encodeURIComponent(query)}&limit=20`,
+            { headers: getAuthHeaders() }
+        );
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) return [];
+        return response.json();
+    };
+
+    const downloadImportTemplate = async () => {
+        const response = await fetch(`${API_BASE_URL}/admin/products/import-template`, {
+            headers: getAuthHeaders()
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) throw new Error('Khong tai duoc file mau');
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nnx_import_san_pham.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const importProductsCSV = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+        const response = await fetch(`${API_BASE_URL}/admin/products/import`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Import that bai');
+        return data;
+    };
+
+    const bulkCreateProducts = async (productList) => {
+        const response = await fetch(`${API_BASE_URL}/admin/products/bulk`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ products: productList })
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Them hang loat that bai');
+        await fetchData();
+        return data;
+    };
+
+    const fetchD1Tables = async () => {
+        const response = await fetch(`${API_BASE_URL}/admin/d1/tables`, { headers: getAuthHeaders() });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) throw new Error('Khong lay duoc danh sach bang');
+        const data = await response.json();
+        return data.tables || [];
+    };
+
+    const runD1Query = async (sql, params = []) => {
+        const response = await fetch(`${API_BASE_URL}/admin/d1/query`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ sql, params })
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Thuc thi that bai');
+        return data;
     };
 
     const updateOrderStatus = async (orderId, status, payload = {}) => {
@@ -489,10 +615,17 @@ export const AppProvider = ({ children }) => {
             updateProduct,
             deleteProduct,
             uploadProductImage,
+            uploadProductImages,
             deleteProductImageFromR2,
             analyzeProductImage,
             analyzeProductText,
+            searchMasterProducts,
+            downloadImportTemplate,
+            importProductsCSV,
+            bulkCreateProducts,
             fetchProductDetail,
+            fetchD1Tables,
+            runD1Query,
             login,
             fetchOrders,
             updateOrderStatus,

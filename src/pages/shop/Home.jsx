@@ -104,7 +104,7 @@ const Home = () => {
                         {products.slice(0, 6).map(p => (
                             <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group">
                                 <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative">
-                                    <img src={getProductImageUrl(p.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
+                                    <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
                                     {/* Fake huge discount badge */}
                                     <div className="absolute top-0 right-0 bg-secondary/10 px-2 py-3 rounded-bl-sm">
                                         <div className="flex flex-col items-center leading-none text-secondary">

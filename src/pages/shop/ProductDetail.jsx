@@ -61,7 +61,7 @@ const ProductDetail = () => {
                         className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg"
                     >
                         <img
-                            src={getProductImageUrl(product.image)}
+                            src={getProductImageUrl(product.image, false, product.category)}
                             alt={product.name}
                             className="w-full h-full object-cover"
                         />

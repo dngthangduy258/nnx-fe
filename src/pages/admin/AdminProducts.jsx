@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
-import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star, Sparkles, ScanText } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useApp, DEFAULT_PRODUCT_IMAGE } from '../../context/AppContext';
+import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
-const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
+const DEFAULT_PLACEHOLDER = DEFAULT_PRODUCT_IMAGE;
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, analyzeProductImage, analyzeProductText, getProductImageUrl, fetchProductDetail } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, searchMasterProducts, getProductImageUrl, fetchProductDetail } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,9 +26,9 @@ const AdminProducts = () => {
     const [mainImageIndex, setMainImageIndex] = useState(0);
     const [uploading, setUploading] = useState(false);
     const [loadingDetail, setLoadingDetail] = useState(false);
-    const [analyzingImage, setAnalyzingImage] = useState(false);
-    const [ocrLoading, setOcrLoading] = useState(false);
-
+    const [masterSuggestions, setMasterSuggestions] = useState([]);
+    const [masterLoading, setMasterLoading] = useState(false);
+    const masterSuggestionsRef = useRef(null);
     const normalizeProductFormData = (product = {}) => ({
         ...product,
         name: product.name || '',
@@ -46,6 +46,51 @@ const AdminProducts = () => {
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
+
+    // Goi y danh muc tu ten (trừ sâu, SC, WP, phân bón...)
+    const suggestCategoryFromName = useCallback((name, cats) => {
+        if (!name || !cats?.length) return null;
+        const n = name.toLowerCase();
+        const keywords = [
+            { keys: ['trừ sâu', 'tru sau', 'insecticide'], id: 'pesticides' },
+            { keys: ['trừ nấm', 'tru nam', 'fungicide'], id: 'fungicides' },
+            { keys: ['phân bón', 'phan bon', 'fertilizer'], id: 'fertilizers' },
+            { keys: ['trừ cỏ', 'tru co', 'herbicide', 'cỏ'], id: 'herbicides' },
+            { keys: ['kích rễ', 'kich re', 'growth'], id: 'growth' },
+        ];
+        for (const { keys, id } of keywords) {
+            if (keys.some(k => n.includes(k)) && cats.some(c => c.id === id)) return cats.find(c => c.id === id);
+        }
+        if (/\b(sc|wp|ec|sl|wg|dk|gr)\b/i.test(n) && cats.some(c => c.id === 'pesticides')) return cats.find(c => c.id === 'pesticides');
+        return null;
+    }, []);
+
+    // Tim kiem master catalog khi go ten (trong modal them moi)
+    useEffect(() => {
+        if (!isModalOpen || editingProduct) return;
+        const q = formData.name.trim();
+        if (q.length < 2) {
+            setMasterSuggestions([]);
+            return;
+        }
+        const t = setTimeout(() => {
+            setMasterLoading(true);
+            searchMasterProducts(q).then((list) => {
+                setMasterSuggestions(Array.isArray(list) ? list : []);
+            }).catch(() => setMasterSuggestions([])).finally(() => setMasterLoading(false));
+        }, 300);
+        return () => clearTimeout(t);
+    }, [isModalOpen, editingProduct, formData.name]);
+
+    const handleSelectMaster = (m) => {
+        setFormData(prev => ({
+            ...prev,
+            name: m.name || prev.name,
+            description: m.description_template || prev.description,
+            category: m.default_category_id && categories.some(c => c.id === m.default_category_id) ? m.default_category_id : prev.category,
+        }));
+        setMasterSuggestions([]);
+    };
 
     const buildImageItemsFromProduct = (product) => {
         const normalized = normalizeProductFormData(product);
@@ -93,6 +138,14 @@ const AdminProducts = () => {
         };
     }, [isModalOpen]);
 
+    useEffect(() => {
+        const closeMaster = (e) => {
+            if (masterSuggestionsRef.current && !masterSuggestionsRef.current.contains(e.target)) setMasterSuggestions([]);
+        };
+        document.addEventListener('click', closeMaster);
+        return () => document.removeEventListener('click', closeMaster);
+    }, []);
+
     const handleAddImages = (e) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
@@ -103,59 +156,6 @@ const AdminProducts = () => {
         setImageItems((prev) => [...prev, ...newItems]);
         if (imageItems.length === 0) setMainImageIndex(0);
         e.target.value = '';
-    };
-
-    const handleAnalyzeImage = async () => {
-        const files = imageItems.filter((item) => item.file).map((item) => item.file);
-        if (!files.length) {
-            alert('Vui long them it nhat mot anh (chup hoac chon file) truoc khi phan tich.');
-            return;
-        }
-        setAnalyzingImage(true);
-        try {
-            const res = await analyzeProductImage(files);
-            setFormData((prev) => ({
-                ...prev,
-                name: res.name ?? prev.name,
-                description: res.description ?? prev.description,
-                category: res.category && categories.some((c) => c.id === res.category) ? res.category : prev.category,
-                price: res.suggestedPrice > 0 ? String(res.suggestedPrice) : prev.price
-            }));
-        } catch (e) {
-            alert(e?.message || 'Phan tich anh that bai.');
-        } finally {
-            setAnalyzingImage(false);
-        }
-    };
-
-    const handleOcr = async () => {
-        const firstWithFile = imageItems.find((i) => i.file);
-        if (!firstWithFile?.file) {
-            alert('Vui long them it nhat mot anh (file) de quet chu.');
-            return;
-        }
-        setOcrLoading(true);
-        try {
-            const Tesseract = (await import('tesseract.js')).default;
-            const { data } = await Tesseract.recognize(firstWithFile.file, 'vie+eng');
-            const rawText = data?.text?.trim() || '';
-            if (rawText.length < 10) {
-                alert('Khong doc duoc du chu tren anh. Thu anh ro hon hoac chon anh co nhieu chu.');
-                return;
-            }
-            const res = await analyzeProductText(rawText);
-            setFormData((prev) => ({
-                ...prev,
-                name: res.name ?? prev.name,
-                description: res.description ?? prev.description,
-                category: res.category && categories.some((c) => c.id === res.category) ? res.category : prev.category,
-                price: res.suggestedPrice > 0 ? String(res.suggestedPrice) : prev.price
-            }));
-        } catch (e) {
-            alert(e?.message || 'Quet chu hoac phan tich that bai.');
-        } finally {
-            setOcrLoading(false);
-        }
     };
 
     const removeImageAt = (index) => {
@@ -218,9 +218,9 @@ const AdminProducts = () => {
                     <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Quản lý sản phẩm</h1>
                     <p className="text-sm md:text-base text-gray-500">Thêm mới hoặc chỉnh sửa thông tin kho hàng của bạn.</p>
                 </div>
-                <Button onClick={() => handleOpenModal()} className="flex items-center justify-center gap-2 w-full md:w-auto">
-                    <Plus className="w-5 h-5" /> Thêm sản phẩm
-                </Button>
+                <Button onClick={() => handleOpenModal()} className="flex items-center justify-center gap-2">
+                        <Plus className="w-5 h-5" /> Thêm sản phẩm
+                    </Button>
             </div>
 
             {/* Toolbar */}
@@ -264,7 +264,7 @@ const AdminProducts = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                                <img src={getProductImageUrl(p.image)} alt="" className="w-full h-full object-cover" />
+                                                <img src={getProductImageUrl(p.image, false, p.category)} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <span className="font-bold text-gray-700">{p.name}</span>
                                         </div>
@@ -326,14 +326,52 @@ const AdminProducts = () => {
                             ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-500 flex items-center gap-2"><Tag className="w-4 h-4" /> Tên sản phẩm</label>
-                                        <input
-                                            required
-                                            className="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-primary outline-none transition-all"
-                                            value={formData.name}
-                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        />
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-sm font-bold text-gray-500 flex items-center gap-2"><Tag className="w-4 h-4" /> Tên sản phẩm (gõ vài ký tự để gợi ý từ catalog)</label>
+                                        <div className="relative" ref={masterSuggestionsRef}>
+                                            <input
+                                                required
+                                                className="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-primary outline-none transition-all"
+                                                value={formData.name}
+                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                placeholder="VD: Thuốc trừ sâu ABC 500SC"
+                                            />
+                                            {masterLoading && (
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Đang tìm...</span>
+                                            )}
+                                            {masterSuggestions.length > 0 && (
+                                                <ul className="absolute z-20 left-0 right-0 mt-1 py-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                                    {masterSuggestions.map((m) => (
+                                                        <li key={m.id}>
+                                                            <button
+                                                                type="button"
+                                                                className="w-full text-left px-4 py-2 hover:bg-primary/10 text-sm"
+                                                                onClick={() => handleSelectMaster(m)}
+                                                            >
+                                                                {m.name}
+                                                                {m.brand && <span className="text-gray-400 ml-1">({m.brand})</span>}
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                        {!editingProduct && (() => {
+                                            const suggested = suggestCategoryFromName(formData.name, categories);
+                                            if (!suggested || suggested.id === formData.category) return null;
+                                            return (
+                                                <p className="mt-1 text-xs text-gray-500 flex items-center gap-2">
+                                                    Gợi ý danh mục:
+                                                    <button
+                                                        type="button"
+                                                        className="text-primary font-medium hover:underline"
+                                                        onClick={() => setFormData(prev => ({ ...prev, category: suggested.id }))}
+                                                    >
+                                                        {suggested.name} →
+                                                    </button>
+                                                </p>
+                                            );
+                                        })()}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-500 flex items-center gap-2"><Layers className="w-4 h-4" /> Danh mục</label>
@@ -396,25 +434,7 @@ const AdminProducts = () => {
                                         >
                                             <ImagePlus className="w-4 h-4" /> Thêm ảnh
                                         </label>
-                                        <button
-                                            type="button"
-                                            onClick={handleAnalyzeImage}
-                                            disabled={analyzingImage || !imageItems.some((i) => i.file)}
-                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            {analyzingImage ? 'Đang phân tích...' : 'Điền nhanh từ ảnh (AI)'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleOcr}
-                                            disabled={ocrLoading || analyzingImage || !imageItems.some((i) => i.file)}
-                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-                                        >
-                                            <ScanText className="w-4 h-4" />
-                                            {ocrLoading ? 'Đang quét chữ…' : 'Quét chữ từ ảnh (OCR)'}
-                                        </button>
-                                    </div>
+                                        </div>
                                     <div className="flex flex-wrap gap-3 mt-3">
                                         {imageItems.map((item, index) => (
                                             <div
@@ -422,7 +442,7 @@ const AdminProducts = () => {
                                                 className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100 group"
                                             >
                                                 <img
-                                                    src={item.url?.startsWith('blob:') ? item.url : getProductImageUrl(item.url)}
+                                                    src={item.url?.startsWith('blob:') ? item.url : getProductImageUrl(item.url, false, formData.category)}
                                                     alt=""
                                                     className="w-full h-full object-cover"
                                                 />
