@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star, Sparkles, ScanText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=600';
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, analyzeProductImage, getProductImageUrl, fetchProductDetail } = useApp();
+    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, analyzeProductImage, analyzeProductText, getProductImageUrl, fetchProductDetail } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +27,7 @@ const AdminProducts = () => {
     const [uploading, setUploading] = useState(false);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [analyzingImage, setAnalyzingImage] = useState(false);
+    const [ocrLoading, setOcrLoading] = useState(false);
 
     const normalizeProductFormData = (product = {}) => ({
         ...product,
@@ -124,6 +125,36 @@ const AdminProducts = () => {
             alert(e?.message || 'Phan tich anh that bai.');
         } finally {
             setAnalyzingImage(false);
+        }
+    };
+
+    const handleOcr = async () => {
+        const firstWithFile = imageItems.find((i) => i.file);
+        if (!firstWithFile?.file) {
+            alert('Vui long them it nhat mot anh (file) de quet chu.');
+            return;
+        }
+        setOcrLoading(true);
+        try {
+            const Tesseract = (await import('tesseract.js')).default;
+            const { data } = await Tesseract.recognize(firstWithFile.file, 'vie+eng');
+            const rawText = data?.text?.trim() || '';
+            if (rawText.length < 10) {
+                alert('Khong doc duoc du chu tren anh. Thu anh ro hon hoac chon anh co nhieu chu.');
+                return;
+            }
+            const res = await analyzeProductText(rawText);
+            setFormData((prev) => ({
+                ...prev,
+                name: res.name ?? prev.name,
+                description: res.description ?? prev.description,
+                category: res.category && categories.some((c) => c.id === res.category) ? res.category : prev.category,
+                price: res.suggestedPrice > 0 ? String(res.suggestedPrice) : prev.price
+            }));
+        } catch (e) {
+            alert(e?.message || 'Quet chu hoac phan tich that bai.');
+        } finally {
+            setOcrLoading(false);
         }
     };
 
@@ -373,6 +404,15 @@ const AdminProducts = () => {
                                         >
                                             <Sparkles className="w-4 h-4" />
                                             {analyzingImage ? 'Đang phân tích...' : 'Điền nhanh từ ảnh (AI)'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleOcr}
+                                            disabled={ocrLoading || analyzingImage || !imageItems.some((i) => i.file)}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                                        >
+                                            <ScanText className="w-4 h-4" />
+                                            {ocrLoading ? 'Đang quét chữ…' : 'Quét chữ từ ảnh (OCR)'}
                                         </button>
                                     </div>
                                     <div className="flex flex-wrap gap-3 mt-3">

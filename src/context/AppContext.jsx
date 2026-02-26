@@ -376,6 +376,25 @@ export const AppProvider = ({ children }) => {
         return response.json();
     };
 
+    const analyzeProductText = async (text) => {
+        const trimmed = typeof text === 'string' ? text.trim() : '';
+        if (!trimmed) return { name: '', description: '', category: '', suggestedPrice: 0 };
+        const response = await fetch(`${API_BASE_URL}/admin/products/analyze-text`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ text: trimmed })
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Phan tich text that bai');
+        }
+        return response.json();
+    };
+
     const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
             const requestBody = typeof payload === 'string'
@@ -472,6 +491,7 @@ export const AppProvider = ({ children }) => {
             uploadProductImage,
             deleteProductImageFromR2,
             analyzeProductImage,
+            analyzeProductText,
             fetchProductDetail,
             login,
             fetchOrders,
