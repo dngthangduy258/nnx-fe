@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useApp } from '../../context/AppContext';
 import { Pin, Calendar, ArrowLeft } from 'lucide-react';
 
@@ -47,8 +49,12 @@ const NewsDetail = () => {
                 </Link>
                 <article className="bg-white rounded-sm shadow-sm overflow-hidden">
                     {article.image && (
-                        <div className="aspect-video bg-gray-100">
-                            <img src={article.image} alt="" className="w-full h-full object-cover" />
+                        <div className="bg-gray-100 flex justify-center overflow-hidden">
+                            <img
+                                src={article.image}
+                                alt=""
+                                className="max-w-full w-full h-auto object-contain"
+                            />
                         </div>
                     )}
                     <div className="p-4 md:p-6">
@@ -66,8 +72,23 @@ const NewsDetail = () => {
                         {article.excerpt && (
                             <p className="text-gray-600 mb-4 border-l-4 border-primary pl-4">{article.excerpt}</p>
                         )}
-                        <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
-                            {article.content || 'Nội dung đang cập nhật.'}
+                        <div className="news-content text-gray-700">
+                            {article.content ? (
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        table: ({ node, ...props }) => (
+                                            <div className="table-wrap">
+                                                <table {...props} />
+                                            </div>
+                                        ),
+                                    }}
+                                >
+                                    {article.content}
+                                </ReactMarkdown>
+                            ) : (
+                                <p className="text-gray-500">Nội dung đang cập nhật.</p>
+                            )}
                         </div>
                     </div>
                 </article>

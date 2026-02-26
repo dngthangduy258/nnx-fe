@@ -226,14 +226,23 @@ const AdminNews = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung (Markdown)</label>
                                 <textarea
-                                    rows={6}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200"
+                                    rows={10}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 font-mono text-sm"
                                     value={form.content}
                                     onChange={(e) => setForm({ ...form, content: e.target.value })}
-                                    placeholder="Nội dung bài viết (có thể xuống dòng)"
+                                    placeholder="Dùng Markdown: **in đậm**, ## tiêu đề, bảng, list..."
                                 />
+                                <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
+                                    <p className="font-semibold text-gray-700">Gợi ý định dạng:</p>
+                                    <p><strong>**chữ in đậm**</strong> → chữ in đậm</p>
+                                    <p><strong>## Tiêu đề nhỏ</strong> → tiêu đề cấp 2</p>
+                                    <p>Bảng: dòng 1 = tiêu đề, dòng 2 = |---|---|, các dòng sau = dữ liệu (dùng | phân cột)</p>
+                                    <p>• List: dòng bắt đầu bằng - hoặc * hoặc 1.</p>
+                                    <p>Link: [text](url). Trích dẫn: dòng bắt đầu bằng &gt;</p>
+                                    <p>Xuống dòng: 2 khoảng trắng cuối dòng hoặc dòng trống.</p>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh đại diện</label>
@@ -252,7 +261,7 @@ const AdminNews = () => {
                                     </label>
                                 </div>
                                 {form.image && (
-                                    <img src={form.image} alt="" className="mt-2 h-24 object-cover rounded-lg border" />
+                                    <img src={form.image} alt="" className="mt-2 max-h-40 w-auto object-contain rounded-lg border bg-gray-50" />
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-4">
