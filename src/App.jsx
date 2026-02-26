@@ -10,8 +10,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminProducts from './pages/admin/AdminProducts';
-import AdminBulkTools from './pages/admin/AdminBulkTools';
-import AdminData from './pages/admin/AdminData';
+import AdminTech from './pages/admin/AdminTech';
 import AdminOrders from './pages/admin/AdminOrders';
 import OrderTracking from './pages/shop/OrderTracking';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -39,8 +38,7 @@ function App() {
                             <Route index element={<AdminDashboard />} />
                             <Route path="categories" element={<AdminCategories />} />
                             <Route path="products" element={<AdminProducts />} />
-                            <Route path="bulk-tools" element={<AdminBulkTools />} />
-                            <Route path="data" element={<AdminData />} />
+                            <Route path="tech" element={<AdminTech />} />
                             <Route path="orders" element={<AdminOrders />} />
                         </Route>
 
