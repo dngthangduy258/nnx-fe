@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp, DEFAULT_PRODUCT_IMAGE } from '../../context/AppContext';
-import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, Package, Tag, DollarSign, Layers, ImagePlus, Star, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 
 const DEFAULT_PLACEHOLDER = DEFAULT_PRODUCT_IMAGE;
 
 const AdminProducts = () => {
-    const { products, categories, addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, searchMasterProducts, getProductImageUrl, fetchProductDetail } = useApp();
+    const { addProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImageFromR2, searchMasterProducts, getProductImageUrl, fetchProductDetail, fetchAdminProducts, fetchAdminCategories, setProductActive } = useApp();
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loadingList, setLoadingList] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,7 +23,8 @@ const AdminProducts = () => {
         description: '',
         image: DEFAULT_PLACEHOLDER,
         images: [],
-        rating: 5.0
+        rating: 5.0,
+        active: true
     });
     const [imageItems, setImageItems] = useState([]);
     const [mainImageIndex, setMainImageIndex] = useState(0);
@@ -38,8 +42,41 @@ const AdminProducts = () => {
         description: product.description || '',
         image: product.image || DEFAULT_PLACEHOLDER,
         images: Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []),
-        rating: product.rating ?? 5.0
+        rating: product.rating ?? 5.0,
+        active: product.active !== 0
     });
+
+    const loadProducts = () => {
+        setLoadingList(true);
+        const params = {};
+        if (selectedCategory !== 'all') params.category = selectedCategory;
+        if (searchTerm.trim()) params.search = searchTerm.trim();
+        fetchAdminProducts(params).then(setProducts).catch(() => setProducts([])).finally(() => setLoadingList(false));
+    };
+
+    const onToggleProductActive = async (p) => {
+        const newActive = !(p.active !== 0);
+        const prevActive = p.active;
+        setProducts(prev => prev.map(item => item.id === p.id ? { ...item, active: newActive ? 1 : 0 } : item));
+        try {
+            await setProductActive(p.id, newActive);
+        } catch (err) {
+            setProducts(prev => prev.map(item => item.id === p.id ? { ...item, active: prevActive } : item));
+            alert(err?.message || 'Không thể cập nhật');
+        }
+    };
+
+    useEffect(() => {
+        fetchAdminCategories().then(setCategories).catch(() => setCategories([]));
+    }, [fetchAdminCategories]);
+
+    useEffect(() => {
+        setLoadingList(true);
+        const params = {};
+        if (selectedCategory !== 'all') params.category = selectedCategory;
+        if (searchTerm.trim()) params.search = searchTerm.trim();
+        fetchAdminProducts(params).then(setProducts).catch(() => setProducts([])).finally(() => setLoadingList(false));
+    }, [selectedCategory, searchTerm, fetchAdminProducts]);
 
     const filteredProducts = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -107,7 +144,7 @@ const AdminProducts = () => {
             setImageItems(buildImageItemsFromProduct(product).length ? buildImageItemsFromProduct(product) : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
             setMainImageIndex(0);
             try {
-                const full = await fetchProductDetail(product.id);
+                const full = await fetchProductDetail(product.id, { admin: true });
                 const items = buildImageItemsFromProduct(full);
                 setFormData(normalizeProductFormData(full));
                 setImageItems(items.length ? items : [{ url: DEFAULT_PLACEHOLDER, file: null }]);
@@ -195,7 +232,8 @@ const AdminProducts = () => {
                 price: Number(formData.price),
                 stock: Number(formData.stock),
                 image: mainUrl,
-                images: allUrls.length ? allUrls : [mainUrl]
+                images: allUrls.length ? allUrls : [mainUrl],
+                active: formData.active !== false
             };
             if (editingProduct) {
                 await updateProduct({ ...data, id: editingProduct.id });
@@ -203,6 +241,7 @@ const AdminProducts = () => {
                 await addProduct(data);
             }
             setIsModalOpen(false);
+            loadProducts();
         } catch (err) {
             console.error(err);
             alert(err?.message || 'Co loi khi luu san pham');
@@ -246,52 +285,64 @@ const AdminProducts = () => {
             </div>
 
             {/* Product Table */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50 text-xs uppercase text-gray-400 font-bold">
-                                <th className="px-6 py-4">Sản phẩm</th>
-                                <th className="px-6 py-4">Danh mục</th>
-                                <th className="px-6 py-4">Giá</th>
-                                <th className="px-6 py-4">Tồn kho</th>
-                                <th className="px-6 py-4 text-right">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredProducts.map((p) => (
-                                <tr key={p.id} className="text-sm hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                                <img src={getProductImageUrl(p.image, false, p.category)} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                            <span className="font-bold text-gray-700">{p.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 capitalize">{p.category}</td>
-                                    <td className="px-6 py-4 font-bold">{p.price.toLocaleString('vi-VN')} đ</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${p.stock < 10 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                                            {p.stock} sản phẩm
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button onClick={() => handleOpenModal(p)} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors">
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => deleteProduct(p.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
+            {loadingList ? (
+                <div className="bg-white rounded-3xl border border-gray-100 p-8 text-center text-gray-500">Đang tải sản phẩm...</div>
+            ) : (
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-gray-50 text-xs uppercase text-gray-400 font-bold">
+                                    <th className="px-6 py-4">Sản phẩm</th>
+                                    <th className="px-6 py-4">Danh mục</th>
+                                    <th className="px-6 py-4">Giá</th>
+                                    <th className="px-6 py-4">Tồn kho</th>
+                                    <th className="px-6 py-4 text-right">Thao tác</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredProducts.map((p) => (
+                                    <tr key={p.id} className={`text-sm hover:bg-gray-50 transition-all duration-200 ${p.active === 0 ? 'bg-gray-50 opacity-75' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                    <img src={getProductImageUrl(p.image, false, p.category)} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <span className="font-bold text-gray-700">{p.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 capitalize">{p.category}</td>
+                                        <td className="px-6 py-4 font-bold">{p.price.toLocaleString('vi-VN')} đ</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${p.stock < 10 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                                                {p.stock} sản phẩm
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onToggleProductActive(p)}
+                                                    className={`p-2 rounded-lg transition-all duration-200 ${p.active !== 0 ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                                                    title={p.active !== 0 ? 'Đang hiện (bấm để ẩn)' : 'Đang ẩn (bấm để hiện)'}
+                                                >
+                                                    {p.active !== 0 ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                                </button>
+                                                <button onClick={() => handleOpenModal(p)} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors" title="Sửa">
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => deleteProduct(p.id).then(loadProducts).catch(e => alert(e?.message || 'Xóa thất bại'))} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Xóa">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Add/Edit Modal */}
             <AnimatePresence>
@@ -402,6 +453,17 @@ const AdminProducts = () => {
                                             value={formData.stock}
                                             onChange={e => setFormData({ ...formData, stock: e.target.value })}
                                         />
+                                    </div>
+                                    <div className="md:col-span-2 flex items-center gap-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.active !== false}
+                                                onChange={e => setFormData({ ...formData, active: e.target.checked })}
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Hiển thị trên gian hàng</span>
+                                        </label>
+                                        <span className="text-xs text-gray-400">(bỏ chọn = ẩn sản phẩm)</span>
                                     </div>
                                 </div>
 

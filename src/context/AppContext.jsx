@@ -305,8 +305,9 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const fetchProductDetail = async (productId) => {
-        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+    const fetchProductDetail = async (productId, options = {}) => {
+        const headers = options.admin ? getAuthHeaders() : {};
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`, { headers });
         if (!response.ok) throw new Error('Khong tai duoc chi tiet san pham');
         return response.json();
     };
@@ -605,6 +606,50 @@ export const AppProvider = ({ children }) => {
         await fetchData();
     };
 
+    /** Admin: lấy tất cả danh mục (kể cả ẩn). */
+    const fetchAdminCategories = async () => {
+        const res = await fetch(`${API_BASE_URL}/admin/categories`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong the tai danh muc');
+        return res.json();
+    };
+
+    /** Admin: lấy tất cả sản phẩm (kể cả ẩn). */
+    const fetchAdminProducts = async (params = {}) => {
+        const sp = new URLSearchParams();
+        if (params.category && params.category !== 'all') sp.set('category', params.category);
+        if (params.search) sp.set('search', params.search);
+        const url = `${API_BASE_URL}/admin/products${sp.toString() ? `?${sp.toString()}` : ''}`;
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong the tai san pham');
+        return res.json();
+    };
+
+    /** Admin: toggle ẩn/hiện nhanh cho sản phẩm. */
+    const setProductActive = async (productId, active) => {
+        const res = await fetch(`${API_BASE_URL}/admin/products/${productId}/active`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ active })
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Khong the cap nhat an/hien san pham');
+        }
+        return res.json();
+    };
+
     const logout = () => {
         clearAdminSession();
     };
@@ -743,6 +788,9 @@ export const AppProvider = ({ children }) => {
             updateCategory,
             deleteCategory,
             fetchData,
+            fetchAdminCategories,
+            fetchAdminProducts,
+            setProductActive,
             logout,
             getProductImageUrl,
             fetchNews,
