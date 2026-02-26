@@ -1,14 +1,14 @@
 # Ảnh mặc định sản phẩm (theo danh mục)
 
-Mỗi danh mục một ảnh mặc định khi sản phẩm không có ảnh. Đặt file trong thư mục này:
+Mỗi danh mục một ảnh mặc định khi sản phẩm không có ảnh. Đặt file **.jpg** trong thư mục này:
 
-- **default-product.png** — ảnh dùng chung khi không có ảnh theo category (fallback).
-- **default-product-{category_id}.png** — ảnh riêng theo từng danh mục.
+- **default-product-{category_id}.jpg** — ảnh riêng theo từng danh mục.
 
-Ví dụ (category id trong hệ thống):
+Ví dụ (đã có sẵn):
 
-- `default-product-pesticides.png` — Thuốc trừ sâu
-- `default-product-fertilizers.png` — Phân bón
-- `default-product-plant-protection.png` — Bảo vệ thực vật
+- `default-product-pesticides.jpg` — Thuốc trừ sâu
+- `default-product-fertilizers.jpg` — Phân bón
+- `default-product-plant-protection.jpg` — Bảo vệ thực vật
+- `default-product-bio.jpg` — Sinh học / Bio
 
-Tên file = `default-product-` + **id danh mục** (chữ thường, không dấu, không khoảng trắng). Nếu không có file theo category, app sẽ dùng `default-product.png`.
+Tên file = `default-product-` + **id danh mục** (chữ thường, không dấu). Nếu không có file theo category, app dùng `default-product-pesticides.jpg`.

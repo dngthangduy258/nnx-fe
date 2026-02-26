@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { FileDown, Upload, Table2, ImagePlus, X } from 'lucide-react';
+import { FileDown, Upload, Table2, ImagePlus, X, Trash2 } from 'lucide-react';
 
 const AdminBulkTools = () => {
-    const { categories, downloadImportTemplate, importProductsCSV, bulkCreateProducts, uploadProductImages } = useApp();
+    const { categories, downloadImportTemplate, importProductsCSV, bulkCreateProducts, uploadProductImages, clearExternalProductImageUrls, fetchData } = useApp();
 
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
@@ -15,6 +15,23 @@ const AdminBulkTools = () => {
 
     const [bulkRows, setBulkRows] = useState([{ name: '', price: '', stock: '', category: 'pesticides' }]);
     const [bulkSaving, setBulkSaving] = useState(false);
+    const [clearLoading, setClearLoading] = useState(false);
+    const [clearResult, setClearResult] = useState(null);
+
+    const handleClearExternalImageUrls = async () => {
+        if (!confirm('Xóa link ảnh không phải R2 (Unsplash, link ngoài)? Sản phẩm đó sẽ hiển thị ảnh mặc định theo danh mục.')) return;
+        setClearLoading(true);
+        setClearResult(null);
+        try {
+            const res = await clearExternalProductImageUrls();
+            setClearResult(res);
+            await fetchData();
+        } catch (e) {
+            alert(e?.message || 'That bai');
+        } finally {
+            setClearLoading(false);
+        }
+    };
 
     const handleDownloadTemplate = async () => {
         try {
@@ -109,6 +126,27 @@ const AdminBulkTools = () => {
             <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Công cụ hàng loạt</h1>
                 <p className="text-sm text-gray-500 mt-1">Import CSV, upload ảnh R2, thêm nhanh nhiều sản phẩm.</p>
+            </div>
+
+            {/* Bảo trì: xóa link ảnh không phải R2 (Unsplash, link ngoài) → dùng ảnh mặc định */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <Trash2 className="w-4 h-4" /> Xóa link ảnh không phải R2
+                </h3>
+                <p className="text-xs text-gray-500">
+                    Xóa trường image/images đang trỏ tới link ngoài (Unsplash, URL khác). Url sẽ rỗng → sản phẩm hiển thị ảnh mặc định theo danh mục. Link R2 được giữ nguyên.
+                </p>
+                <button
+                    type="button"
+                    onClick={handleClearExternalImageUrls}
+                    disabled={clearLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 disabled:opacity-50 text-sm font-medium"
+                >
+                    {clearLoading ? 'Đang xử lý...' : 'Xóa link ảnh không phải R2'}
+                </button>
+                {clearResult != null && (
+                    <p className="text-sm text-gray-600">Đã xóa link ảnh ở <strong>{clearResult.cleared ?? 0}</strong> sản phẩm. Các sản phẩm đó sẽ dùng ảnh mặc định theo danh mục.</p>
+                )}
             </div>
 
             {/* Import CSV */}

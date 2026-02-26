@@ -5,11 +5,46 @@ import { useApp } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { categories } from '../../data/categories';
 
+/** Lấy sản phẩm đều theo từng danh mục (round-robin). Sau này có thể sort theo số lượng mua/đánh giá trong từng category trước khi pick. */
+function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
+    if (!products.length || limit <= 0) return [];
+    const byCategory = {};
+    for (const p of products) {
+        if (!byCategory[p.category]) byCategory[p.category] = [];
+        byCategory[p.category].push(p);
+    }
+    const ids = categoryOrder.length ? categoryOrder.filter(c => byCategory[c]?.length) : Object.keys(byCategory);
+    if (!ids.length) return products.slice(0, limit);
+    const indices = {};
+    ids.forEach(c => { indices[c] = 0; });
+    const result = [];
+    let round = 0;
+    while (result.length < limit && round < 1000) {
+        let added = 0;
+        for (const c of ids) {
+            if (result.length >= limit) break;
+            const list = byCategory[c];
+            if (list && indices[c] < list.length) {
+                result.push(list[indices[c]]);
+                indices[c]++;
+                added++;
+            }
+        }
+        if (added === 0) break;
+        round++;
+    }
+    return result;
+}
+
 const Home = () => {
-    const { products, getProductImageUrl } = useApp();
+    const { products, categories, getProductImageUrl } = useApp();
     const [visibleCount, setVisibleCount] = useState(12);
 
     const loadMore = () => setVisibleCount(prev => prev + 12);
+
+    const categoryOrder = categories.map(c => c.id);
+    const hotDealProducts = pickProductsBalancedByCategory(products, 6, categoryOrder);
+    const suggestedProducts = pickProductsBalancedByCategory(products, visibleCount, categoryOrder);
 
     // Mock banners for e-commerce feel
     const mainBanner = "https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=1200";
@@ -101,7 +136,7 @@ const Home = () => {
                     </div>
 
                     <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar">
-                        {products.slice(0, 6).map(p => (
+                        {hotDealProducts.map(p => (
                             <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group">
                                 <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative">
                                     <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
@@ -132,7 +167,7 @@ const Home = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
-                    {products.slice(0, visibleCount).map((p) => (
+                    {suggestedProducts.map((p) => (
                         <ProductCard key={p.id} product={p} />
                     ))}
                     {products.length === 0 && (

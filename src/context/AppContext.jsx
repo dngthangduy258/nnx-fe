@@ -6,14 +6,14 @@ const AppContext = createContext();
 const baseFromEnv = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787';
 export const API_BASE_URL = baseFromEnv.endsWith('/api') ? baseFromEnv : `${baseFromEnv}/api`;
 
-/** Anh mac dinh khi san pham khong co anh. Theo category: public/images/default-product-{category_id}.png; fallback: public/images/default-product.png */
-export const DEFAULT_PRODUCT_IMAGE = '/images/default-product.png';
+/** Anh mac dinh khi san pham khong co anh. Theo category: public/images/default-product-{category_id}.jpg; fallback: pesticides */
+export const DEFAULT_PRODUCT_IMAGE = '/images/default-product-pesticides.jpg';
 
-/** Tra ve URL anh mac dinh theo danh muc. VD: pesticides -> /images/default-product-pesticides.png */
+/** Tra ve URL anh mac dinh theo danh muc. VD: pesticides -> /images/default-product-pesticides.jpg */
 export const getDefaultProductImageUrl = (category) => {
     if (!category || typeof category !== 'string') return DEFAULT_PRODUCT_IMAGE;
-    const safe = category.replace(/[^a-z0-9-_]/gi, '').slice(0, 50) || 'default';
-    return `/images/default-product-${safe}.png`;
+    const safe = category.replace(/[^a-z0-9-_]/gi, '').slice(0, 50) || 'pesticides';
+    return `/images/default-product-${safe}.jpg`;
 };
 
 /** Tra ve URL anh. useProxy: proxy R2; category: khi khong co url thi dung anh mac dinh theo danh muc. */
@@ -521,6 +521,20 @@ export const AppProvider = ({ children }) => {
         return data;
     };
 
+    const clearExternalProductImageUrls = async () => {
+        const response = await fetch(`${API_BASE_URL}/admin/products/clear-external-image-urls`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        if (response.status === 401 || response.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen thuc hien');
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'That bai');
+        return data;
+    };
+
     const updateOrderStatus = async (orderId, status, payload = {}) => {
         try {
             const requestBody = typeof payload === 'string'
@@ -626,6 +640,7 @@ export const AppProvider = ({ children }) => {
             fetchProductDetail,
             fetchD1Tables,
             runD1Query,
+            clearExternalProductImageUrls,
             login,
             fetchOrders,
             updateOrderStatus,
