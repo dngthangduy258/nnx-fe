@@ -70,6 +70,20 @@ export const AppProvider = ({ children }) => {
         return headers;
     };
 
+    const fetchSearchSuggestions = async (query, limit = 8) => {
+        if (!query || typeof query !== 'string' || !query.trim()) return [];
+        try {
+            const q = query.trim();
+            const url = `${API_BASE_URL}/products?search=${encodeURIComponent(q)}`;
+            const res = await fetch(url);
+            if (!res.ok) return [];
+            const data = await res.json();
+            return (Array.isArray(data) ? data : []).slice(0, limit);
+        } catch {
+            return [];
+        }
+    };
+
     const fetchData = async (options = {}) => {
         try {
             setLoading(true);
@@ -178,14 +192,18 @@ export const AppProvider = ({ children }) => {
         }
     }, [adminTokenExpiresAt, adminToken]);
 
-    const addToCart = (product) => {
+    const [cartAddFeedback, setCartAddFeedback] = React.useState(null);
+
+    const addToCart = (product, quantity = 1) => {
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
-                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, { ...product, quantity }];
         });
+        setCartAddFeedback(quantity);
+        setTimeout(() => setCartAddFeedback(null), 2500);
     };
 
     const removeFromCart = (productId) => {
@@ -752,6 +770,7 @@ export const AppProvider = ({ children }) => {
             loading,
             error,
             cart,
+            cartAddFeedback,
             orders,
             adminOrderDetail,
             ordersPagination,
@@ -785,6 +804,7 @@ export const AppProvider = ({ children }) => {
             updateCategory,
             deleteCategory,
             fetchData,
+            fetchSearchSuggestions,
             fetchAdminCategories,
             fetchAdminProducts,
             setProductActive,

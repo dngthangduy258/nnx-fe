@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import SEO from '../../components/common/SEO';
 import { ChevronRight, Pin, Calendar } from 'lucide-react';
 
 const NewsList = () => {
@@ -19,6 +20,8 @@ const NewsList = () => {
     };
 
     return (
+        <>
+            <SEO title="Tin tức" description="Tin tức nông nghiệp, kênh chuyên gia – Cập nhật kiến thức và tin tức tại Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh." url="/news" />
         <div className="bg-[#f5f5f5] min-h-screen pb-10">
             <div className="container mx-auto px-4 py-6">
                 <div className="bg-white rounded-sm shadow-sm p-4 md:p-6">
@@ -26,7 +29,7 @@ const NewsList = () => {
                         Tin tức nông nghiệp
                     </h1>
                     <p className="text-gray-600 text-sm mb-6">
-                        Cập nhật kiến thức và tin tức nông nghiệp — luôn hướng tới sản phẩm chất lượng tại NNXAGRO.
+                        Cập nhật kiến thức và tin tức nông nghiệp — luôn hướng tới sản phẩm chất lượng tại Nông Nghiệp Xanh.
                     </p>
                     {loading && <div className="py-12 text-center text-gray-500">Đang tải tin tức...</div>}
                     {error && <div className="py-8 text-center text-red-600">{error}</div>}
@@ -64,11 +67,12 @@ const NewsList = () => {
                         </div>
                     )}
                     <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                        <Link to="/products" className="text-primary font-medium hover:underline">← Mua sắm sản phẩm tại NNXAGRO</Link>
+                        <Link to="/products" className="text-primary font-medium hover:underline">← Mua sắm sản phẩm tại Nông Nghiệp Xanh</Link>
                     </div>
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

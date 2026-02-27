@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useApp } from '../../context/AppContext';
+import SEO from '../../components/common/SEO';
+import { siteConfig } from '../../data/seo-config';
 import { Pin, Calendar, ArrowLeft } from 'lucide-react';
 
 const NewsDetail = () => {
@@ -41,7 +43,26 @@ const NewsDetail = () => {
         );
     }
 
+    const articleUrl = `${siteConfig.siteUrl}/news/${article.id}`;
+    const articleJsonLd = {
+        '@type': 'Article',
+        headline: article.title,
+        description: article.excerpt || article.title,
+        image: article.image || undefined,
+        datePublished: article.created_at,
+    };
+
     return (
+        <>
+            <SEO
+                title={article.title}
+                description={article.excerpt || article.title}
+                image={article.image}
+                imageAlt={article.title}
+                url={articleUrl}
+                type="article"
+                jsonLd={articleJsonLd}
+            />
         <div className="bg-[#f5f5f5] min-h-screen pb-10">
             <div className="container mx-auto px-4 py-6 max-w-3xl">
                 <Link to="/news" className="inline-flex items-center gap-1 text-gray-600 hover:text-primary text-sm mb-4">
@@ -98,6 +119,7 @@ const NewsDetail = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

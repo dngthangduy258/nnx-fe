@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import SEO from '../../components/common/SEO';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
@@ -122,7 +123,9 @@ const Cart = () => {
 
     if (isOrderPlaced) {
         return (
-            <div className="container pt-40 pb-20 text-center">
+            <>
+                <SEO title="Đặt hàng thành công" noindex />
+                <div className="container pt-40 pb-20 text-center">
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -145,12 +148,15 @@ const Cart = () => {
                         </Link>
                     </div>
                 </motion.div>
-            </div>
+                </div>
+            </>
         );
     }
 
     return (
-        <div className="cart-page pt-24 pb-20">
+        <>
+            <SEO title="Giỏ hàng" description="Giỏ hàng của bạn – Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh. Thanh toán COD, giao hàng tận nơi." url="/cart" />
+            <div className="cart-page pt-20 pb-24 sm:pt-24 sm:pb-20">
             <div className="container">
                 <h1 className="text-3xl font-extrabold text-primary-dark mb-10">Giỏ hàng của bạn</h1>
 
@@ -203,7 +209,7 @@ const Cart = () => {
 
                         {/* Summary & Checkout */}
                         <div className="space-y-6">
-                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
                                 <h2 className="text-xl font-bold mb-6">Đơn hàng</h2>
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-text-muted">
@@ -232,14 +238,14 @@ const Cart = () => {
                                     <input
                                         type="text"
                                         placeholder="Họ và tên"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                        className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
                                         value={customerInfo.name}
                                         onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, name: e.target.value }); }}
                                     />
                                     <input
                                         type="tel"
                                         placeholder="Số điện thoại"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                        className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
                                         value={customerInfo.phone}
                                         onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, phone: e.target.value }); }}
                                     />
@@ -249,27 +255,22 @@ const Cart = () => {
                                             <MapPin className="w-4 h-4" /> Địa chỉ nhận hàng
                                         </p>
                                         <>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="addressType"
-                                                    checked={addressType === 'old'}
-                                                    onChange={() => handleAddressTypeChange('old')}
-                                                    className="text-primary"
-                                                />
-                                                <span className="text-sm">Đơn vị hành chính cũ</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="addressType"
-                                                    checked={addressType === 'new'}
-                                                    onChange={() => handleAddressTypeChange('new')}
-                                                    className="text-primary"
-                                                />
-                                                <span className="text-sm">Đơn vị hành chính mới</span>
-                                            </label>
+                                        <p className="text-xs text-gray-500 mb-1.5">Loại đơn vị hành chính</p>
+                                        <div className="flex p-1 rounded-xl bg-gray-100 border border-gray-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddressTypeChange('old')}
+                                                className={`flex-1 min-h-[48px] px-4 py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 touch-manipulation ${addressType === 'old' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
+                                            >
+                                                ĐVHC Cũ
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddressTypeChange('new')}
+                                                className={`flex-1 min-h-[48px] px-4 py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 touch-manipulation ${addressType === 'new' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
+                                            >
+                                                ĐVHC Mới
+                                            </button>
                                         </div>
 
                                         <SearchableSelect
@@ -309,14 +310,14 @@ const Cart = () => {
                                         <input
                                             type="text"
                                             placeholder="Số nhà, tên đường (bắt buộc)"
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none"
+                                            className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
                                             value={customerInfo.streetAddress}
                                             onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, streetAddress: e.target.value }); }}
                                         />
                                         </>
                                     </div>
 
-                                    <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
+                                    <Button type="submit" variant="primary" size="lg" className="w-full min-h-[48px] text-base touch-manipulation" disabled={isLoading}>
                                         Xem lại & Xác nhận <ArrowRight className="w-5 h-5" />
                                     </Button>
                                 </form>
@@ -352,10 +353,10 @@ const Cart = () => {
                                             </div>
                                         )}
                                         <div className="flex gap-3">
-                                            <Button variant="outline" className="flex-1" onClick={() => { setShowReview(false); setFormError(''); }}>
+                                            <Button variant="outline" className="flex-1 min-h-[44px] touch-manipulation" onClick={() => { setShowReview(false); setFormError(''); }}>
                                                 Quay lại sửa
                                             </Button>
-                                            <Button variant="primary" className="flex-1" onClick={handleConfirmOrder} disabled={isLoading}>
+                                            <Button variant="primary" className="flex-1 min-h-[44px] touch-manipulation" onClick={handleConfirmOrder} disabled={isLoading}>
                                                 {isLoading ? 'Đang xử lý...' : 'Xác nhận đặt hàng'} <ArrowRight className="w-4 h-4" />
                                             </Button>
                                         </div>
@@ -380,7 +381,8 @@ const Cart = () => {
                 )}
             </div>
 
-        </div>
+            </div>
+        </>
     );
 };
 

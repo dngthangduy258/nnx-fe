@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../../components/common/SEO';
 import { Search, Phone, Hash, ArrowRight, Package, Clock, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
@@ -53,7 +54,9 @@ const LookupOrder = () => {
     };
 
     return (
-        <div className="lookup-page pt-32 pb-20">
+        <>
+            <SEO title="Tra cứu đơn hàng" description="Tra cứu trạng thái đơn hàng Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh bằng mã tracking hoặc số điện thoại." url="/lookup-order" />
+            <div className="lookup-page pt-32 pb-20">
             <div className="container max-w-2xl">
                 <div className="text-center mb-10">
                     <h1 className="text-3xl font-extrabold text-primary-dark mb-4">Tra cứu đơn hàng</h1>
@@ -141,6 +144,7 @@ const LookupOrder = () => {
                 </AnimatePresence>
             </div>
         </div>
+        </>
     );
 };
 

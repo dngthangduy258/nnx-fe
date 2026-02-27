@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Không index admin
+Disallow: /admin
+Disallow: /login
+
+# Sitemap
+Sitemap: https://nnxagro.vn/sitemap.xml

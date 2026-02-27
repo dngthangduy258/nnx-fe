@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AppProvider } from './context/AppContext';
 import ScrollToTop from './components/ScrollToTop';
 import MainLayout from './components/layout/MainLayout';
@@ -19,9 +20,11 @@ import AdminLogin from './pages/admin/AdminLogin';
 import LookupOrder from './pages/shop/LookupOrder';
 import NewsList from './pages/shop/NewsList';
 import NewsDetail from './pages/shop/NewsDetail';
+import Contact from './pages/shop/Contact';
 
 function App() {
     return (
+        <HelmetProvider>
         <AppProvider>
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <ScrollToTop />
@@ -36,6 +39,7 @@ function App() {
                         <Route path="/lookup-order" element={<MainLayout><LookupOrder /></MainLayout>} />
                         <Route path="/news" element={<MainLayout><NewsList /></MainLayout>} />
                         <Route path="/news/:id" element={<MainLayout><NewsDetail /></MainLayout>} />
+                        <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
 
                         {/* Login - No Layout */}
                         <Route path="/login" element={<AdminLogin />} />
@@ -55,6 +59,7 @@ function App() {
                 </div>
             </Router>
         </AppProvider>
+        </HelmetProvider>
     );
 }
 

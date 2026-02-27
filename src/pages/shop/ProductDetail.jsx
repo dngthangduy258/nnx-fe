@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Minus, Plus } from 'lucide-react';
+import SEO from '../../components/common/SEO';
+import { siteConfig } from '../../data/seo-config';
+import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Minus, Plus, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
 import ProductCard from '../../components/shop/ProductCard';
@@ -12,6 +14,7 @@ const ProductDetail = () => {
     const { products, categories, loading, addToCart, getProductImageUrl } = useApp();
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [justAdded, setJustAdded] = useState(false);
 
     if (loading) {
         return (
@@ -48,12 +51,36 @@ const ProductDetail = () => {
         : getProductImageUrl(product.image, false, product.category);
 
     const handleAddToCart = () => {
-        for (let i = 0; i < quantity; i++) {
-            addToCart(product);
-        }
+        addToCart(product, quantity);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 1500);
+    };
+
+    const productUrl = `${siteConfig.siteUrl}/product/${product.id}`;
+    const productJsonLd = {
+        '@type': 'Product',
+        name: product.name,
+        description: product.description || product.name,
+        image: mainImageUrl.startsWith('http') ? mainImageUrl : `${siteConfig.siteUrl}${mainImageUrl}`,
+        offers: {
+            '@type': 'Offer',
+            price: product.price,
+            priceCurrency: 'VND',
+            availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        },
     };
 
     return (
+        <>
+            <SEO
+                title={product.name}
+                description={product.description || `${product.name} - ${product.price.toLocaleString('vi-VN')} đ`}
+                image={mainImageUrl}
+                imageAlt={product.name}
+                url={productUrl}
+                type="product"
+                jsonLd={productJsonLd}
+            />
         <div className="product-detail-page pt-24 pb-20">
             <div className="container">
                 {/* Back Button */}
@@ -145,8 +172,20 @@ const ProductDetail = () => {
                                 </button>
                             </div>
 
-                            <Button size="lg" className="flex-1" onClick={handleAddToCart}>
-                                <ShoppingCart className="w-5 h-5" /> Thêm vào giỏ hàng
+                            <Button size="lg" className="flex-1 relative min-h-[52px]" onClick={handleAddToCart}>
+                                <motion.span
+                                    animate={justAdded ? { opacity: 0 } : { opacity: 1 }}
+                                    className="flex items-center justify-center gap-2"
+                                >
+                                    <ShoppingCart className="w-5 h-5" /> Thêm vào giỏ hàng
+                                </motion.span>
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={justAdded ? { opacity: 1 } : { opacity: 0 }}
+                                    className="absolute inset-0 flex items-center justify-center gap-2 font-bold pointer-events-none"
+                                >
+                                    <Check className="w-5 h-5" /> Đã thêm!
+                                </motion.span>
                             </Button>
                         </div>
 
@@ -182,6 +221,7 @@ const ProductDetail = () => {
             </div>
 
         </div>
+        </>
     );
 };
 

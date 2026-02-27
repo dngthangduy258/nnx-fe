@@ -64,9 +64,9 @@ const SearchableSelect = ({
         <div ref={containerRef} className="relative">
             <div
                 onClick={() => !disabled && handleFocus()}
-                className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus-within:border-primary outline-none bg-white flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus-within:border-primary outline-none bg-white flex items-center gap-2 cursor-pointer touch-manipulation ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
-                <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <Search className="w-5 h-5 text-gray-400 flex-shrink-0 sm:w-4 sm:h-4" />
                 <input
                     ref={inputRef}
                     type="text"
@@ -78,16 +78,16 @@ const SearchableSelect = ({
                     onFocus={handleFocus}
                     placeholder={displayValue ? '' : (isOpen ? searchPlaceholder : placeholder)}
                     disabled={disabled}
-                    className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder:text-gray-400"
+                    className="flex-1 min-w-0 bg-transparent border-none outline-none text-gray-800 placeholder:text-gray-400 text-base"
                 />
-                <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 sm:w-4 sm:h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {isOpen && (
-                <div className="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg py-1">
-                    <div className="max-h-52 overflow-y-auto">
+                <div className="absolute z-50 left-0 right-0 mt-1 max-h-[70vh] sm:max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg py-1 overscroll-contain">
+                    <div className="max-h-[calc(70vh-0.5rem)] sm:max-h-52 overflow-y-auto overscroll-contain">
                         {filteredOptions.length === 0 ? (
-                            <div className="px-4 py-3 text-sm text-gray-500">Không tìm thấy</div>
+                            <div className="px-4 py-4 text-base text-gray-500">Không tìm thấy</div>
                         ) : (
                             filteredOptions.map((opt) => {
                                 const optValue = getOptionValue(opt);
@@ -98,7 +98,7 @@ const SearchableSelect = ({
                                         key={optValue}
                                         type="button"
                                         onClick={() => handleSelect(opt)}
-                                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary/10 transition-colors ${isSelected ? 'bg-primary/15 text-primary font-medium' : 'text-gray-700'}`}
+                                        className={`w-full text-left px-4 py-3.5 min-h-[44px] text-base sm:text-sm sm:py-2.5 hover:bg-primary/10 active:bg-primary/15 transition-colors touch-manipulation ${isSelected ? 'bg-primary/15 text-primary font-medium' : 'text-gray-700'}`}
                                     >
                                         {optLabel}
                                     </button>

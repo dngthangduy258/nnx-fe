@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import SEO from '../../components/common/SEO';
 import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
@@ -72,8 +73,10 @@ const OrderTracking = () => {
     );
 
     return (
-        <div className="order-tracking-page pt-24 pb-20 bg-gray-50/30 min-h-screen">
-            <div className="container">
+        <>
+            <SEO title={`Đơn hàng #${order.id}`} description={`Tra cứu đơn hàng ${order.tracking_id}`} noindex />
+            <div className="order-tracking-page pt-24 pb-20 bg-gray-50/30 min-h-screen">
+                <div className="container">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold mb-8 group"
@@ -233,6 +236,7 @@ const OrderTracking = () => {
                 )}
             </div>
         </div>
+        </>
     );
 };
 

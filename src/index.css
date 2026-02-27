@@ -78,6 +78,11 @@
 }
 
 @layer utilities {
+    /* Tránh zoom khi tap trên mobile, phản hồi nhanh hơn */
+    .touch-manipulation {
+        touch-action: manipulation;
+    }
+
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
         height: 6px;

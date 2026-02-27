@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Percent, Star, ShieldCheck, MapPin, Pin } from 'lucide-react';
+import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { categories } from '../../data/categories';
@@ -51,7 +52,6 @@ const Home = () => {
     const hotDealProducts = pickProductsBalancedByCategory(products, 7, categoryOrder);
     const suggestedProducts = pickProductsBalancedByCategory(products, visibleCount, categoryOrder);
 
-    // Mock banners for e-commerce feel
     const mainBanner = "https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=1200";
     const sideBanners = [
         "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&q=80&w=400",
@@ -59,7 +59,9 @@ const Home = () => {
     ];
 
     return (
-        <div className="bg-[#f5f5f5] w-full pb-10">
+        <>
+            <SEO title="Trang chủ" description="Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh: phân bón, thuốc BVTV, chế phẩm sinh học, hạt giống. Giao hàng tận nơi, COD." url="/" />
+            <div className="bg-[#f5f5f5] w-full pb-10">
             {/* Top Banners Section */}
             <section className="container mx-auto px-2 md:px-0 pt-6 mb-6">
                 <div className="flex flex-col lg:flex-row gap-2">
@@ -160,7 +162,7 @@ const Home = () => {
                             ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-2 text-center">
-                            Cập nhật kiến thức — mua sắm sản phẩm tại <Link to="/products" className="text-primary font-medium">NNXAGRO</Link>
+                            Cập nhật kiến thức — mua sắm sản phẩm tại <Link to="/products" className="text-primary font-medium">Nông Nghiệp Xanh</Link>
                         </p>
                     </div>
                 </section>
@@ -234,7 +236,8 @@ const Home = () => {
                     </div>
                 )}
             </section>
-        </div>
+            </div>
+        </>
     );
 };
 

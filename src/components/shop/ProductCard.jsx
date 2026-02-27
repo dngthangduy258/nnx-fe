@@ -42,7 +42,7 @@ const ProductCard = ({ product }) => {
                 {/* Official/Mall Badge */}
                 <div className="absolute top-0 left-0">
                     <div className="bg-primary text-white text-[10px] font-medium px-1.5 py-0.5 rounded-br-lg shadow-sm">
-                        NNX Mall
+                        Nông Nghiệp Xanh
                     </div>
                 </div>
             </div>

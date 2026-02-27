@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import SEO from '../../components/common/SEO';
 import ProductCard from '../../components/shop/ProductCard';
 import { ChevronRight, Filter, Search, Star, Menu, X } from 'lucide-react';
 import { categories as staticCategories } from '../../data/categories';
@@ -119,6 +120,12 @@ const ProductList = () => {
     }
 
     return (
+        <>
+            <SEO
+                title="Sản phẩm"
+                description="Mua phân bón, thuốc bảo vệ thực vật, chế phẩm sinh học, hạt giống chất lượng tại Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh. Giao hàng tận nơi."
+                url="/products"
+            />
         <div className="bg-[#f5f5f5] min-h-screen pb-20 pt-4 relative">
             {/* Mobile Filter Drawer */}
             <AnimatePresence>
@@ -408,6 +415,7 @@ const ProductList = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 
