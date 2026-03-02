@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
 import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
@@ -56,7 +56,7 @@ const Home = () => {
         if (slideshows.length <= 1) return;
         const t = setInterval(() => setSlideIndex((i) => (i + 1) % slideshows.length), 5000);
         return () => clearInterval(t);
-    }, [slideshows.length]);
+    }, [slideshows]);
 
     const loadMore = () => setVisibleCount(prev => prev + 12);
 
@@ -75,8 +75,8 @@ const Home = () => {
             {/* Slideshow + Tin nổi bật */}
             <section className="container mx-auto px-2 md:px-0 pt-6 mb-6">
                 <div className="flex flex-col lg:flex-row gap-2">
-                    {/* Slideshow */}
-                    <div className="lg:w-[66.66%] w-full rounded-sm overflow-hidden relative shadow-sm h-[200px] md:h-[350px]">
+                    {/* Slideshow - 16:9, auto chuyển, nút prev/next khi hover */}
+                    <div className="lg:w-[66.66%] w-full rounded-sm overflow-hidden relative shadow-sm aspect-video group">
                         {slideshows.length > 0 ? (
                             <>
                                 {slideshows.map((s, i) => (
@@ -89,17 +89,35 @@ const Home = () => {
                                     </Link>
                                 ))}
                                 {slideshows.length > 1 && (
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                                        {slideshows.map((_, i) => (
-                                            <button
-                                                key={i}
-                                                type="button"
-                                                onClick={() => setSlideIndex(i)}
-                                                className={`w-2.5 h-2.5 rounded-full transition-colors ${i === slideIndex ? 'bg-primary ring-2 ring-white' : 'bg-white/70 hover:bg-white/90'}`}
-                                                aria-label={`Slide ${i + 1}`}
-                                            />
-                                        ))}
-                                    </div>
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSlideIndex((i) => (i - 1 + slideshows.length) % slideshows.length); }}
+                                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            aria-label="Slide trước"
+                                        >
+                                            <ChevronLeft className="w-6 h-6" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSlideIndex((i) => (i + 1) % slideshows.length); }}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            aria-label="Slide sau"
+                                        >
+                                            <ChevronRight className="w-6 h-6" />
+                                        </button>
+                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                            {slideshows.map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSlideIndex(i); }}
+                                                    className={`w-2.5 h-2.5 rounded-full transition-colors ${i === slideIndex ? 'bg-primary ring-2 ring-white' : 'bg-white/70 hover:bg-white/90'}`}
+                                                    aria-label={`Slide ${i + 1}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
                             </>
                         ) : (
