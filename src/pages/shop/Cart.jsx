@@ -9,7 +9,7 @@ import SearchableSelect from '../../components/common/SearchableSelect';
 import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
 
 const Cart = () => {
-    const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl } = useApp();
+    const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl, customer, isCustomerAuthenticated } = useApp();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const payosCancel = searchParams.get('payos') === 'cancel';
@@ -53,6 +53,17 @@ const Cart = () => {
             setSearchParams({}, { replace: true });
         }
     }, [payosCancel, setSearchParams]);
+
+    useEffect(() => {
+        if (isCustomerAuthenticated && customer) {
+            setCustomerInfo(prev => ({
+                ...prev,
+                name: customer.name || prev.name,
+                phone: customer.phone || prev.phone,
+                streetAddress: customer.address || prev.streetAddress
+            }));
+        }
+    }, [isCustomerAuthenticated, customer?.name, customer?.phone, customer?.address]);
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = subtotal > 1000000 ? 0 : 35000;

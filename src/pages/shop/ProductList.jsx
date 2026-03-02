@@ -234,7 +234,7 @@ const ProductList = () => {
 
                 {/* Left Sidebar Filter (Hidden on Small Mobile, visible on Md+) */}
                 <div className="hidden md:flex flex-col w-60 flex-shrink-0">
-                    <div className="bg-white rounded-sm shadow-sm p-4 sticky top-[120px]">
+                    <div className="bg-white rounded-sm shadow-sm p-4 sticky top-[128px]">
                         <h2 className="uppercase font-bold text-gray-800 border-b border-gray-100 pb-2 flex items-center gap-2 mb-3">
                             <Menu className="w-5 h-5" /> Danh Mục Sản Phẩm
                         </h2>
@@ -327,7 +327,7 @@ const ProductList = () => {
                     </div>
 
                     {/* Mobile Sort/Filter Bar (Sticky) */}
-                    <div className="md:hidden flex sticky top-[55px] z-40 bg-white shadow-sm border-b border-gray-100 mb-2">
+                    <div className="md:hidden flex sticky top-[56px] z-40 bg-white shadow-sm border-b border-gray-100 mb-2">
                         <select
                             className="flex-1 text-center py-3 border-r border-gray-100 bg-transparent text-sm focus:outline-none"
                             value={sortBy}

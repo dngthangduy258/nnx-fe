@@ -13,7 +13,7 @@ const MainLayout = ({ children }) => {
         <div className="flex flex-col min-h-screen bg-bg-main">
             <Header />
             <AddToCartToast count={cartAddFeedback} />
-            <main className="flex-1">
+            <main className="flex-1 pt-[56px] md:pt-[128px]">
                 {children}
             </main>
             <footer className="bg-primary-dark text-white/90 py-12 border-t border-white/10 mt-auto">

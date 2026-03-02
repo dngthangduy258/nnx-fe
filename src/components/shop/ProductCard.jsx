@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, MapPin } from 'lucide-react';
+import { Star, MapPin, ShoppingCart, Check } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const ProductCard = ({ product }) => {
-    const { getProductImageUrl } = useApp();
+    const { getProductImageUrl, addToCart } = useApp();
+    const [justAdded, setJustAdded] = useState(false);
+
+    const handleAddToCart = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToCart(product, 1);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 1500);
+    };
     // Generate some random plausible stats based on ID for demo purposes
     const idStr = String(product.id);
     const soldCount = (idStr.charCodeAt(0) * 12) + 34;
@@ -78,9 +87,23 @@ const ProductCard = ({ product }) => {
                 </div>
             </div>
 
-            {/* Find Similar (Shopee style hover banner) */}
-            <div className="absolute bottom-0 w-full bg-primary text-white text-xs text-center py-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                Tìm sản phẩm tương tự
+            {/* Quick Add to Cart - hiện khi hover */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm pointer-events-none group-hover:pointer-events-auto">
+                <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2.5 rounded-lg shadow-md transition-colors"
+                >
+                    {justAdded ? (
+                        <>
+                            <Check className="w-4 h-4" /> Đã thêm!
+                        </>
+                    ) : (
+                        <>
+                            <ShoppingCart className="w-4 h-4" /> Thêm vào giỏ hàng
+                        </>
+                    )}
+                </button>
             </div>
         </Link>
     );

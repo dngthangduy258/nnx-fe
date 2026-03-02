@@ -19,6 +19,9 @@ import AdminSlideshow from './pages/admin/AdminSlideshow';
 import OrderTracking from './pages/shop/OrderTracking';
 import Payment from './pages/shop/Payment';
 import AdminLogin from './pages/admin/AdminLogin';
+import CustomerLogin from './pages/shop/CustomerLogin';
+import CustomerRegister from './pages/shop/CustomerRegister';
+import Account from './pages/shop/Account';
 import LookupOrder from './pages/shop/LookupOrder';
 import NewsList from './pages/shop/NewsList';
 import NewsDetail from './pages/shop/NewsDetail';
@@ -45,8 +48,11 @@ function App() {
                         <Route path="/news/:id" element={<MainLayout><NewsDetail /></MainLayout>} />
                         <Route path="/slide/:id" element={<MainLayout><SlideshowDetail /></MainLayout>} />
                         <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+                        <Route path="/dang-nhap" element={<MainLayout><CustomerLogin /></MainLayout>} />
+                        <Route path="/dang-ky" element={<MainLayout><CustomerRegister /></MainLayout>} />
+                        <Route path="/account" element={<MainLayout><Account /></MainLayout>} />
 
-                        {/* Login - No Layout */}
+                        {/* Admin Login - No Layout */}
                         <Route path="/login" element={<AdminLogin />} />
 
                         {/* Admin Routes with AdminLayout */}

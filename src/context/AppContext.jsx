@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AppContext = createContext();
 
@@ -53,6 +53,14 @@ export const AppProvider = ({ children }) => {
     const [adminToken, setAdminToken] = useState(() => localStorage.getItem('nnx_token') || '');
     const [adminTokenExpiresAt, setAdminTokenExpiresAt] = useState(() => Number(localStorage.getItem('nnx_token_expires_at') || '0'));
 
+    const [customer, setCustomer] = useState(() => {
+        const saved = localStorage.getItem('nnx_customer');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [customerToken, setCustomerToken] = useState(() => localStorage.getItem('nnx_customer_token') || '');
+    const [customerTokenExpiresAt, setCustomerTokenExpiresAt] = useState(() => Number(localStorage.getItem('nnx_customer_token_expires_at') || '0'));
+    const [customerOrders, setCustomerOrders] = useState([]);
+
     const clearAdminSession = () => {
         localStorage.removeItem('nnx_user');
         localStorage.removeItem('nnx_token');
@@ -60,6 +68,24 @@ export const AppProvider = ({ children }) => {
         setAdminUser(null);
         setAdminToken('');
         setAdminTokenExpiresAt(0);
+    };
+
+    const clearCustomerSession = () => {
+        localStorage.removeItem('nnx_customer');
+        localStorage.removeItem('nnx_customer_token');
+        localStorage.removeItem('nnx_customer_token_expires_at');
+        setCustomer(null);
+        setCustomerToken('');
+        setCustomerTokenExpiresAt(0);
+        setCustomerOrders([]);
+    };
+
+    const getCustomerAuthHeaders = () => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (customerToken && Date.now() < customerTokenExpiresAt) {
+            headers.Authorization = `Bearer ${customerToken}`;
+        }
+        return headers;
     };
 
     const getAuthHeaders = () => {
@@ -228,7 +254,7 @@ export const AppProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getCustomerAuthHeaders(),
                 body: JSON.stringify({
                     name: customerInfo.name,
                     phone: customerInfo.phone,
@@ -253,6 +279,78 @@ export const AppProvider = ({ children }) => {
         } catch (err) {
             console.error('Checkout error:', err);
             throw err;
+        }
+    };
+
+    const customerRegister = async (phone, name, password, address = '') => {
+        const response = await fetch(`${API_BASE_URL}/customers/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, name, password, address })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Đăng ký thất bại');
+        const expiresAt = Date.now() + (data.expiresIn || 43200) * 1000;
+        localStorage.setItem('nnx_customer', JSON.stringify(data.customer));
+        localStorage.setItem('nnx_customer_token', data.token);
+        localStorage.setItem('nnx_customer_token_expires_at', String(expiresAt));
+        setCustomer(data.customer);
+        setCustomerToken(data.token);
+        setCustomerTokenExpiresAt(expiresAt);
+        return data.customer;
+    };
+
+    const customerLogin = async (phone, password) => {
+        const response = await fetch(`${API_BASE_URL}/customers/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, password })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Đăng nhập thất bại');
+        const expiresAt = Date.now() + (data.expiresIn || 43200) * 1000;
+        localStorage.setItem('nnx_customer', JSON.stringify(data.customer));
+        localStorage.setItem('nnx_customer_token', data.token);
+        localStorage.setItem('nnx_customer_token_expires_at', String(expiresAt));
+        setCustomer(data.customer);
+        setCustomerToken(data.token);
+        setCustomerTokenExpiresAt(expiresAt);
+        return data.customer;
+    };
+
+    const customerLogout = () => {
+        clearCustomerSession();
+    };
+
+    const fetchCustomerOrders = useCallback(async () => {
+        if (!customerToken || Date.now() >= customerTokenExpiresAt) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/customers/orders`, {
+                headers: { Authorization: `Bearer ${customerToken}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setCustomerOrders(Array.isArray(data) ? data : []);
+        } catch {
+            setCustomerOrders([]);
+        }
+    }, [customerToken, customerTokenExpiresAt]);
+
+    const updateCustomerProfile = async (updates) => {
+        if (!customerToken || Date.now() >= customerTokenExpiresAt) throw new Error('Vui lòng đăng nhập lại');
+        const response = await fetch(`${API_BASE_URL}/customers/me`, {
+            method: 'PATCH',
+            headers: getCustomerAuthHeaders(),
+            body: JSON.stringify(updates)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Cập nhật thất bại');
+        const saved = localStorage.getItem('nnx_customer');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const updated = { ...parsed, ...updates };
+            localStorage.setItem('nnx_customer', JSON.stringify(updated));
+            setCustomer(updated);
         }
     };
 
@@ -860,6 +958,14 @@ export const AppProvider = ({ children }) => {
             ordersPagination,
             adminUser,
             isAdminAuthenticated: !!adminUser && !!adminToken && Date.now() < adminTokenExpiresAt,
+            customer,
+            customerOrders,
+            isCustomerAuthenticated: !!customer && !!customerToken && Date.now() < customerTokenExpiresAt,
+            customerRegister,
+            customerLogin,
+            customerLogout,
+            fetchCustomerOrders,
+            updateCustomerProfile,
             addToCart,
             removeFromCart,
             updateCartQuantity,

@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Search, Bell, HelpCircle, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import SearchWithSuggestions from '../shop/SearchWithSuggestions';
 
 const Header = () => {
-    const { cart, cartAddFeedback } = useApp();
+    const { cart, cartAddFeedback, customer, isCustomerAuthenticated } = useApp();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <header className="bg-primary text-white sticky top-0 z-50 shadow">
+        <header className="bg-primary text-white fixed top-0 left-0 right-0 z-[100] shadow-md">
             {/* Top Bar (Hidden on Mobile) */}
             <div className="hidden md:block bg-primary-dark">
                 <div className="container mx-auto px-4 flex justify-between items-center text-xs py-1.5 h-8">
@@ -27,9 +27,11 @@ const Header = () => {
                     </div>
                     <div className="flex gap-4 items-center">
                         <Link to="/lookup-order" className="flex items-center gap-1 hover:text-gray-200">Tra cứu đơn hàng</Link>
-                        {/* <Link to="/products" className="flex items-center gap-1 hover:text-gray-200"><Bell className="w-4 h-4" /> Thông báo</Link>
-                        <Link to="/lookup-order" className="flex items-center gap-1 hover:text-gray-200"><HelpCircle className="w-4 h-4" /> Hỗ trợ</Link> */}
-                        <Link to="/login" className="flex items-center gap-1 hover:text-gray-200"><User className="w-4 h-4" /> Đăng nhập</Link>
+                        {isCustomerAuthenticated ? (
+                            <Link to="/account" className="flex items-center gap-1 hover:text-gray-200"><User className="w-4 h-4" /> {customer?.name}</Link>
+                        ) : (
+                            <Link to="/dang-nhap" className="flex items-center gap-1 hover:text-gray-200"><User className="w-4 h-4" /> Đăng nhập</Link>
+                        )}
                     </div>
                 </div>
             </div>
@@ -122,7 +124,11 @@ const Header = () => {
                         <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-gray-100 font-medium">Tất cả sản phẩm</Link>
                         <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-gray-100 font-medium">Liên hệ</Link>
                         <Link to="/lookup-order" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-gray-100 font-medium">Tra cứu đơn hàng</Link>
-                        <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="py-3 text-primary font-bold">Đăng nhập Quản trị</Link>
+                        {isCustomerAuthenticated ? (
+                            <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-gray-100 font-medium text-primary">Tài khoản</Link>
+                        ) : (
+                            <Link to="/dang-nhap" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-gray-100 font-medium">Đăng nhập</Link>
+                        )}
                     </div>
                 </div>
                 </>

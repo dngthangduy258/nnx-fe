@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Percent, Star, ShieldCheck, MapPin, ShoppingCart, Check } from 'lucide-react';
 import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
@@ -38,8 +38,46 @@ function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
     return result;
 }
 
+const HotDealCard = ({ product: p, categories, getProductImageUrl, addToCart }) => {
+    const [justAdded, setJustAdded] = useState(false);
+    const handleAddToCart = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToCart(p, 1);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 1500);
+    };
+    return (
+        <Link to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group flex flex-col relative">
+            <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative flex-shrink-0">
+                <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
+                <div className="absolute top-0 right-0 bg-secondary/10 px-2 py-3 rounded-bl-sm">
+                    <div className="flex flex-col items-center leading-none text-secondary">
+                        <span className="text-[10px] font-bold">GIẢM</span>
+                        <span className="text-sm font-black">20%</span>
+                    </div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 pointer-events-none group-hover:pointer-events-auto">
+                    <button type="button" onClick={handleAddToCart} className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2 rounded-lg">
+                        {justAdded ? <><Check className="w-3.5 h-3.5" /> Đã thêm!</> : <><ShoppingCart className="w-3.5 h-3.5" /> Thêm vào giỏ</>}
+                    </button>
+                </div>
+            </div>
+            <div className="flex flex-col flex-1 min-h-0">
+                <h3 className="text-xs md:text-sm font-medium text-gray-800 line-clamp-2 h-10 leading-tight break-words" title={p.name}>{p.name}</h3>
+                <p className="text-[10px] text-gray-500 capitalize line-clamp-2 h-6 mt-0.5">{categories.find(c => c.id === p.category)?.name || p.category}</p>
+                <div className="text-center font-bold text-secondary text-sm md:text-base mt-1 flex-shrink-0">{p.price.toLocaleString('vi-VN')} đ</div>
+                <div className="h-4 bg-secondary/20 rounded-full overflow-hidden relative mt-1 flex-shrink-0">
+                    <div className="absolute top-0 left-0 bottom-0 bg-secondary w-2/3"></div>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">Đã bán 120</div>
+                </div>
+            </div>
+        </Link>
+    );
+};
+
 const Home = () => {
-    const { products, categories, getProductImageUrl, fetchNews, fetchSlideshows } = useApp();
+    const { products, categories, getProductImageUrl, addToCart, fetchNews, fetchSlideshows } = useApp();
     const [visibleCount, setVisibleCount] = useState(12);
     const [newsList, setNewsList] = useState([]);
     const [slideshows, setSlideshows] = useState([]);
@@ -217,26 +255,7 @@ const Home = () => {
 
                     <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar items-stretch">
                         {hotDealProducts.map(p => (
-                            <Link key={p.id} to={`/product/${p.id}`} className="min-w-[150px] w-[150px] md:min-w-[200px] md:w-[200px] flex-shrink-0 group flex flex-col">
-                                <div className="bg-gray-50 aspect-square overflow-hidden mb-2 relative flex-shrink-0">
-                                    <img src={getProductImageUrl(p.image, false, p.category)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={p.name} />
-                                    <div className="absolute top-0 right-0 bg-secondary/10 px-2 py-3 rounded-bl-sm">
-                                        <div className="flex flex-col items-center leading-none text-secondary">
-                                            <span className="text-[10px] font-bold">GIẢM</span>
-                                            <span className="text-sm font-black">20%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col flex-1 min-h-0">
-                                    <h3 className="text-xs md:text-sm font-medium text-gray-800 line-clamp-2 h-10 leading-tight break-words" title={p.name}>{p.name}</h3>
-                                    <p className="text-[10px] text-gray-500 capitalize line-clamp-2 h-6 mt-0.5">{categories.find(c => c.id === p.category)?.name || p.category}</p>
-                                    <div className="text-center font-bold text-secondary text-sm md:text-base mt-1 flex-shrink-0">{p.price.toLocaleString('vi-VN')} đ</div>
-                                    <div className="h-4 bg-secondary/20 rounded-full overflow-hidden relative mt-1 flex-shrink-0">
-                                        <div className="absolute top-0 left-0 bottom-0 bg-secondary w-2/3"></div>
-                                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-sm">Đã bán 120</div>
-                                    </div>
-                                </div>
-                            </Link>
+                            <HotDealCard key={p.id} product={p} categories={categories} getProductImageUrl={getProductImageUrl} addToCart={addToCart} />
                         ))}
                     </div>
                 </div>
@@ -244,7 +263,7 @@ const Home = () => {
 
             {/* Main Product Feed - "Gợi ý cho bạn" */}
             <section className="container mx-auto px-2 md:px-0">
-                <div className="bg-white px-4 py-3 border-b-4 border-primary inline-block rounded-t-sm shadow-sm sticky top-[60px] md:top-[120px] z-40 w-full mb-2 uppercase text-primary font-bold">
+                <div className="bg-white px-4 py-3 border-b-4 border-primary inline-block rounded-t-sm shadow-sm sticky top-[56px] md:top-[128px] z-40 w-full mb-2 uppercase text-primary font-bold">
                     Gợi ý Hôm Nay
                 </div>
 
