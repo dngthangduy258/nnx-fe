@@ -10,7 +10,7 @@ const OrderTracking = () => {
     const { trackingId } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const payosSuccess = searchParams.get('payos') === 'success';
+    const payosSuccess = searchParams.get('payos') === 'success' || searchParams.get('status') === 'PAID';
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -80,9 +80,17 @@ const OrderTracking = () => {
             <div className="order-tracking-page pt-24 pb-20 bg-gray-50/30 min-h-screen">
                 <div className="container">
                 {payosSuccess && (
-                    <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 flex items-center gap-3">
-                        <CheckCircle className="w-6 h-6 flex-shrink-0" />
-                        <span className="font-medium">Thanh toán PayOS thành công! Đơn hàng đang được xử lý.</span>
+                    <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 shadow-sm">
+                        <div className="flex items-start gap-4">
+                            <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                                <CheckCircle className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-extrabold text-green-800 mb-2">Thanh toán thành công!</h2>
+                                <p className="text-green-700 font-medium mb-1">Chúng tôi đã nhận được thanh toán của bạn qua PayOS.</p>
+                                <p className="text-green-700/90 text-sm">Cửa hàng sẽ chuẩn bị đơn hàng và giao cho đơn vị vận chuyển ngay. Bạn sẽ nhận được thông báo khi đơn hàng được gửi đi.</p>
+                            </div>
+                        </div>
                     </div>
                 )}
                 <button
