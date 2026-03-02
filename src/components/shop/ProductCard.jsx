@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Star, MapPin, ShoppingCart, Check } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Star, MapPin, ShoppingCart, Check, Phone } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const ProductCard = ({ product }) => {
+    const navigate = useNavigate();
     const { getProductImageUrl, addToCart } = useApp();
     const [justAdded, setJustAdded] = useState(false);
 
@@ -87,23 +88,33 @@ const ProductCard = ({ product }) => {
                 </div>
             </div>
 
-            {/* Quick Add to Cart - hiện khi hover */}
+            {/* Quick Add to Cart / Liên hệ - hiện khi hover */}
             <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-sm pointer-events-none group-hover:pointer-events-auto">
-                <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2.5 rounded-lg shadow-md transition-colors"
-                >
-                    {justAdded ? (
-                        <>
-                            <Check className="w-4 h-4" /> Đã thêm!
-                        </>
-                    ) : (
-                        <>
-                            <ShoppingCart className="w-4 h-4" /> Thêm vào giỏ hàng
-                        </>
-                    )}
-                </button>
+                {(product.stock ?? 0) > 0 ? (
+                    <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2.5 rounded-lg shadow-md transition-colors"
+                    >
+                        {justAdded ? (
+                            <>
+                                <Check className="w-4 h-4" /> Đã thêm!
+                            </>
+                        ) : (
+                            <>
+                                <ShoppingCart className="w-4 h-4" /> Thêm vào giỏ hàng
+                            </>
+                        )}
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/contact'); }}
+                        className="w-full flex items-center justify-center gap-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-2.5 rounded-lg shadow-md transition-colors"
+                    >
+                        <Phone className="w-4 h-4" /> Liên hệ cửa hàng
+                    </button>
+                )}
             </div>
         </Link>
     );

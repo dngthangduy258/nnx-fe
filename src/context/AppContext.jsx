@@ -207,9 +207,13 @@ export const AppProvider = ({ children }) => {
         fetchData();
     }, []);
 
+    const isCustomerAuthenticated = !!customer && !!customerToken && Date.now() < customerTokenExpiresAt;
+
     useEffect(() => {
-        localStorage.setItem('agro_cart', JSON.stringify(cart));
-    }, [cart]);
+        if (!isCustomerAuthenticated) {
+            localStorage.setItem('agro_cart', JSON.stringify(cart));
+        }
+    }, [cart, isCustomerAuthenticated]);
 
     useEffect(() => {
         if (!adminTokenExpiresAt || !adminToken) return;
@@ -218,27 +222,80 @@ export const AppProvider = ({ children }) => {
         }
     }, [adminTokenExpiresAt, adminToken]);
 
+    const fetchCustomerCart = useCallback(async () => {
+        if (!customerToken || Date.now() >= customerTokenExpiresAt) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/customers/cart`, {
+                headers: { Authorization: `Bearer ${customerToken}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setCart(Array.isArray(data) ? data : []);
+        } catch {
+            setCart([]);
+        }
+    }, [customerToken, customerTokenExpiresAt]);
+
+    useEffect(() => {
+        if (isCustomerAuthenticated) {
+            fetchCustomerCart();
+        } else {
+            const saved = localStorage.getItem('agro_cart');
+            setCart(saved ? JSON.parse(saved) : []);
+        }
+    }, [isCustomerAuthenticated, fetchCustomerCart]);
+
     const [cartAddFeedback, setCartAddFeedback] = React.useState(null);
 
-    const addToCart = (product, quantity = 1) => {
-        setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
-            if (existing) {
-                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
+    const addToCart = async (product, quantity = 1) => {
+        if (isCustomerAuthenticated) {
+            try {
+                await fetch(`${API_BASE_URL}/customers/cart`, {
+                    method: 'POST',
+                    headers: getCustomerAuthHeaders(),
+                    body: JSON.stringify({ productId: product.id, quantity })
+                });
+                await fetchCustomerCart();
+                setCartAddFeedback(quantity);
+                setTimeout(() => setCartAddFeedback(null), 2500);
+            } catch (e) {
+                console.error('Add to cart error:', e);
             }
-            return [...prev, { ...product, quantity }];
-        });
-        setCartAddFeedback(quantity);
-        setTimeout(() => setCartAddFeedback(null), 2500);
+        } else {
+            setCart(prev => {
+                const existing = prev.find(item => item.id === product.id);
+                if (existing) {
+                    return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
+                }
+                return [...prev, { ...product, quantity }];
+            });
+            setCartAddFeedback(quantity);
+            setTimeout(() => setCartAddFeedback(null), 2500);
+        }
     };
 
     const removeFromCart = (productId) => {
-        setCart(prev => prev.filter(item => item.id !== productId));
+        if (isCustomerAuthenticated) {
+            fetch(`${API_BASE_URL}/customers/cart/${productId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${customerToken}` }
+            }).then(() => fetchCustomerCart()).catch(console.error);
+        } else {
+            setCart(prev => prev.filter(item => item.id !== productId));
+        }
     };
 
     const updateCartQuantity = (productId, quantity) => {
         if (quantity < 1) return;
-        setCart(prev => prev.map(item => item.id === productId ? { ...item, quantity } : item));
+        if (isCustomerAuthenticated) {
+            fetch(`${API_BASE_URL}/customers/cart/${productId}`, {
+                method: 'PATCH',
+                headers: getCustomerAuthHeaders(),
+                body: JSON.stringify({ quantity })
+            }).then(() => fetchCustomerCart()).catch(console.error);
+        } else {
+            setCart(prev => prev.map(item => item.id === productId ? { ...item, quantity } : item));
+        }
     };
 
     const checkout = async (customerInfo, paymentMethod = 'cod') => {
@@ -282,6 +339,19 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    const syncLocalCartToDb = async (token) => {
+        if (!cart?.length) return;
+        try {
+            await fetch(`${API_BASE_URL}/customers/cart/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ items: cart })
+            });
+        } catch (e) {
+            console.error('Sync cart error:', e);
+        }
+    };
+
     const customerRegister = async (phone, name, password, address = '') => {
         const response = await fetch(`${API_BASE_URL}/customers/register`, {
             method: 'POST',
@@ -290,6 +360,7 @@ export const AppProvider = ({ children }) => {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || 'Đăng ký thất bại');
+        await syncLocalCartToDb(data.token);
         const expiresAt = Date.now() + (data.expiresIn || 43200) * 1000;
         localStorage.setItem('nnx_customer', JSON.stringify(data.customer));
         localStorage.setItem('nnx_customer_token', data.token);
@@ -308,6 +379,7 @@ export const AppProvider = ({ children }) => {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || 'Đăng nhập thất bại');
+        await syncLocalCartToDb(data.token);
         const expiresAt = Date.now() + (data.expiresIn || 43200) * 1000;
         localStorage.setItem('nnx_customer', JSON.stringify(data.customer));
         localStorage.setItem('nnx_customer_token', data.token);
@@ -319,6 +391,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const customerLogout = () => {
+        localStorage.setItem('agro_cart', JSON.stringify(cart));
         clearCustomerSession();
     };
 

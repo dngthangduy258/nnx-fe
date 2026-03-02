@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Percent, Star, ShieldCheck, MapPin, ShoppingCart, Check } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronRight, ChevronLeft, Percent, Star, ShieldCheck, MapPin, ShoppingCart, Check, Phone } from 'lucide-react';
 import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
@@ -39,7 +39,9 @@ function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
 }
 
 const HotDealCard = ({ product: p, categories, getProductImageUrl, addToCart }) => {
+    const navigate = useNavigate();
     const [justAdded, setJustAdded] = useState(false);
+    const inStock = (p.stock ?? 0) > 0;
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -58,9 +60,15 @@ const HotDealCard = ({ product: p, categories, getProductImageUrl, addToCart }) 
                     </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 pointer-events-none group-hover:pointer-events-auto">
-                    <button type="button" onClick={handleAddToCart} className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2 rounded-lg">
-                        {justAdded ? <><Check className="w-3.5 h-3.5" /> Đã thêm!</> : <><ShoppingCart className="w-3.5 h-3.5" /> Thêm vào giỏ</>}
-                    </button>
+                    {inStock ? (
+                        <button type="button" onClick={handleAddToCart} className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold py-2 rounded-lg">
+                            {justAdded ? <><Check className="w-3.5 h-3.5" /> Đã thêm!</> : <><ShoppingCart className="w-3.5 h-3.5" /> Thêm vào giỏ</>}
+                        </button>
+                    ) : (
+                        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/contact'); }} className="w-full flex items-center justify-center gap-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold py-2 rounded-lg">
+                            <Phone className="w-3.5 h-3.5" /> Liên hệ cửa hàng
+                        </button>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col flex-1 min-h-0">

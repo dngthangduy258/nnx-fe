@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import { siteConfig } from '../../data/seo-config';
-import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Minus, Plus, Check } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Minus, Plus, Check, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
 import ProductCard from '../../components/shop/ProductCard';
@@ -144,7 +144,9 @@ const ProductDetail = () => {
                                 <span className="font-bold">{product.rating}</span>
                             </div>
                             <span className="text-gray-300">|</span>
-                            <span className="text-sm text-green-600 font-bold">Còn hàng: {product.stock} sản phẩm</span>
+                            <span className={`text-sm font-bold ${(product.stock ?? 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {(product.stock ?? 0) > 0 ? `Còn hàng: ${product.stock} sản phẩm` : 'Hết hàng'}
+                            </span>
                         </div>
 
                         <p className="text-3xl font-extrabold text-secondary mb-6">
@@ -155,39 +157,50 @@ const ProductDetail = () => {
                             {product.description}
                         </p>
 
-                        {/* Quantity Selector */}
+                        {/* Quantity + Add to Cart / Liên hệ cửa hàng */}
                         <div className="flex items-center gap-6 mb-8">
-                            <div className="flex items-center border border-gray-200 rounded-xl p-1">
-                                <button
-                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-12 text-center font-bold">{quantity}</span>
-                                <button
-                                    onClick={() => setQuantity(quantity + 1)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {(product.stock ?? 0) > 0 ? (
+                                <>
+                                    <div className="flex items-center border border-gray-200 rounded-xl p-1">
+                                        <button
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <Minus className="w-4 h-4" />
+                                        </button>
+                                        <span className="w-12 text-center font-bold">{quantity}</span>
+                                        <button
+                                            onClick={() => setQuantity(quantity + 1)}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    </div>
 
-                            <Button size="lg" className="flex-1 relative min-h-[52px]" onClick={handleAddToCart}>
-                                <motion.span
-                                    animate={justAdded ? { opacity: 0 } : { opacity: 1 }}
-                                    className="flex items-center justify-center gap-2"
+                                    <Button size="lg" className="flex-1 relative min-h-[52px]" onClick={handleAddToCart}>
+                                        <motion.span
+                                            animate={justAdded ? { opacity: 0 } : { opacity: 1 }}
+                                            className="flex items-center justify-center gap-2"
+                                        >
+                                            <ShoppingCart className="w-5 h-5" /> Thêm vào giỏ hàng
+                                        </motion.span>
+                                        <motion.span
+                                            initial={{ opacity: 0 }}
+                                            animate={justAdded ? { opacity: 1 } : { opacity: 0 }}
+                                            className="absolute inset-0 flex items-center justify-center gap-2 font-bold pointer-events-none"
+                                        >
+                                            <Check className="w-5 h-5" /> Đã thêm!
+                                        </motion.span>
+                                    </Button>
+                                </>
+                            ) : (
+                                <Link
+                                    to="/contact"
+                                    className="flex-1 min-h-[52px] flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white px-8 py-3.5 text-lg font-bold transition-all duration-200"
                                 >
-                                    <ShoppingCart className="w-5 h-5" /> Thêm vào giỏ hàng
-                                </motion.span>
-                                <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={justAdded ? { opacity: 1 } : { opacity: 0 }}
-                                    className="absolute inset-0 flex items-center justify-center gap-2 font-bold pointer-events-none"
-                                >
-                                    <Check className="w-5 h-5" /> Đã thêm!
-                                </motion.span>
-                            </Button>
+                                    <Phone className="w-5 h-5" /> Liên hệ cửa hàng
+                                </Link>
+                            )}
                         </div>
 
                         {/* Trust Badges */}
