@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Percent, Star, ShieldCheck, MapPin, Pin } from 'lucide-react';
+import { ChevronRight, Percent, Star, ShieldCheck, MapPin } from 'lucide-react';
 import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
@@ -38,13 +38,25 @@ function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
 }
 
 const Home = () => {
-    const { products, categories, getProductImageUrl, fetchNews } = useApp();
+    const { products, categories, getProductImageUrl, fetchNews, fetchSlideshows } = useApp();
     const [visibleCount, setVisibleCount] = useState(12);
     const [newsList, setNewsList] = useState([]);
+    const [slideshows, setSlideshows] = useState([]);
+    const [slideIndex, setSlideIndex] = useState(0);
 
     useEffect(() => {
         fetchNews(4, 0).then(setNewsList).catch(() => setNewsList([]));
     }, [fetchNews]);
+
+    useEffect(() => {
+        fetchSlideshows().then(setSlideshows).catch(() => setSlideshows([]));
+    }, [fetchSlideshows]);
+
+    useEffect(() => {
+        if (slideshows.length <= 1) return;
+        const t = setInterval(() => setSlideIndex((i) => (i + 1) % slideshows.length), 5000);
+        return () => clearInterval(t);
+    }, [slideshows.length]);
 
     const loadMore = () => setVisibleCount(prev => prev + 12);
 
@@ -52,37 +64,80 @@ const Home = () => {
     const hotDealProducts = pickProductsBalancedByCategory(products, 7, categoryOrder);
     const suggestedProducts = pickProductsBalancedByCategory(products, visibleCount, categoryOrder);
 
-    const mainBanner = "https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=1200";
-    const sideBanners = [
-        "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&q=80&w=400",
-        "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=400"
-    ];
+    const fallbackBanner = "https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=1200";
+    const currentSlide = slideshows[slideIndex];
+    const featuredNews = newsList.slice(0, 3);
 
     return (
         <>
             <SEO title="Trang chủ" description="Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh: phân bón, thuốc BVTV, chế phẩm sinh học, hạt giống. Giao hàng tận nơi, COD." url="/" />
             <div className="bg-[#f5f5f5] w-full pb-10">
-            {/* Top Banners Section */}
+            {/* Slideshow + Tin nổi bật */}
             <section className="container mx-auto px-2 md:px-0 pt-6 mb-6">
                 <div className="flex flex-col lg:flex-row gap-2">
-                    {/* Main Slider Area */}
+                    {/* Slideshow */}
                     <div className="lg:w-[66.66%] w-full rounded-sm overflow-hidden relative shadow-sm h-[200px] md:h-[350px]">
-                        <img src={mainBanner} alt="Khuyến mãi" className="w-full h-full object-cover" />
-                        {/* Fake slider dots */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-white"></span>
-                            <span className="w-2.5 h-2.5 rounded-full bg-white/70"></span>
-                            <span className="w-2.5 h-2.5 rounded-full bg-white/70"></span>
-                            <span className="w-2.5 h-2.5 rounded-full bg-white/70"></span>
-                        </div>
+                        {slideshows.length > 0 ? (
+                            <>
+                                {slideshows.map((s, i) => (
+                                    <Link
+                                        key={s.id}
+                                        to={`/slide/${s.id}`}
+                                        className={`absolute inset-0 block transition-opacity duration-500 ${i === slideIndex ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}
+                                    >
+                                        <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
+                                    </Link>
+                                ))}
+                                {slideshows.length > 1 && (
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                        {slideshows.map((_, i) => (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={() => setSlideIndex(i)}
+                                                className={`w-2.5 h-2.5 rounded-full transition-colors ${i === slideIndex ? 'bg-primary ring-2 ring-white' : 'bg-white/70 hover:bg-white/90'}`}
+                                                aria-label={`Slide ${i + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <img src={fallbackBanner} alt="Khuyến mãi" className="w-full h-full object-cover" />
+                        )}
                     </div>
-                    {/* Side Banners Area */}
-                    <div className="lg:w-[33.33%] w-full flex flex-row lg:flex-col gap-2 h-auto lg:h-[350px]">
-                        <div className="flex-1 rounded-sm overflow-hidden shadow-sm">
-                            <img src={sideBanners[0]} alt="Phân bón" className="w-full h-full object-cover hover:opacity-95 transition-opacity cursor-pointer" />
+                    {/* Tin nổi bật */}
+                    <div className="lg:w-[33.33%] w-full flex flex-col rounded-sm overflow-hidden shadow-sm bg-white">
+                        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                            <h2 className="text-sm font-bold text-primary border-b-2 border-primary pb-1">Tin nổi bật</h2>
+                            <Link to="/news" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">
+                                Xem thêm <ChevronRight className="w-3.5 h-3.5" />
+                            </Link>
                         </div>
-                        <div className="flex-1 rounded-sm overflow-hidden shadow-sm">
-                            <img src={sideBanners[1]} alt="Hạt giống" className="w-full h-full object-cover hover:opacity-95 transition-opacity cursor-pointer" />
+                        <div className="flex-1 p-3 space-y-2 min-h-0">
+                            {featuredNews.length > 0 ? (
+                                featuredNews.map((item) => (
+                                    <Link
+                                        key={item.id}
+                                        to={`/news/${item.id}`}
+                                        className="flex gap-2 p-2 rounded hover:bg-gray-50 transition-colors group"
+                                    >
+                                        <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                                            {item.image ? (
+                                                <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-lg text-gray-400">📰</div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-[10px] text-gray-500">{new Date(item.created_at).toLocaleDateString('vi-VN')}</span>
+                                            <h3 className="text-xs font-semibold text-gray-800 group-hover:text-primary line-clamp-2 leading-tight">{item.title}</h3>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="text-xs text-gray-500 py-4 text-center">Chưa có tin tức</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -128,45 +183,6 @@ const Home = () => {
                     </div>
                 </div>
             </section>
-
-            {/* Tin tức nông nghiệp - compact, trọng tâm vẫn là sản phẩm */}
-            {newsList.length > 0 && (
-                <section className="container mx-auto px-2 md:px-0 mb-6">
-                    <div className="bg-white rounded-sm shadow-sm p-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-lg font-bold text-primary border-b-2 border-primary pb-1">Tin tức nông nghiệp</h2>
-                            <Link to="/news" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
-                                Xem tất cả <ChevronRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {newsList.slice(0, 4).map((item) => (
-                                <Link
-                                    key={item.id}
-                                    to={`/news/${item.id}`}
-                                    className="block p-3 border border-gray-100 rounded hover:border-primary hover:bg-primary/5 transition-all group"
-                                >
-                                    <div className="aspect-video bg-gray-100 rounded overflow-hidden mb-2">
-                                        {item.image ? (
-                                            <img src={item.image} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-2xl text-gray-400">📰</div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                                        {item.pin_to_top ? <Pin className="w-3 h-3 text-primary" /> : null}
-                                        <span>{new Date(item.created_at).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-800 group-hover:text-primary line-clamp-2 mt-0.5">{item.title}</h3>
-                                </Link>
-                            ))}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                            Cập nhật kiến thức — mua sắm sản phẩm tại <Link to="/products" className="text-primary font-medium">Nông Nghiệp Xanh</Link>
-                        </p>
-                    </div>
-                </section>
-            )}
 
             {/* Top Selling Products / Flash Deal Style */}
             <section className="container mx-auto px-2 md:px-0 mb-6">

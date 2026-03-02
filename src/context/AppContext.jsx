@@ -763,6 +763,86 @@ export const AppProvider = ({ children }) => {
         return res.json();
     };
 
+    // --- Slideshow ---
+    const fetchSlideshows = async () => {
+        const res = await fetch(`${API_BASE_URL}/slideshows`);
+        if (!res.ok) return [];
+        return res.json();
+    };
+
+    const fetchSlideshowById = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/slideshows/${id}`);
+        if (!res.ok) throw new Error('Khong tim thay slide');
+        return res.json();
+    };
+
+    const fetchAdminSlideshows = async () => {
+        const res = await fetch(`${API_BASE_URL}/admin/slideshows`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong the tai slideshow');
+        return res.json();
+    };
+
+    const fetchAdminSlideshowById = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/admin/slideshows/${id}`, { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+        if (!res.ok) throw new Error('Khong tim thay slide');
+        return res.json();
+    };
+
+    const createSlideshow = async (data) => {
+        const res = await fetch(`${API_BASE_URL}/admin/slideshows`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Khong the them slide');
+        }
+        return res.json();
+    };
+
+    const updateSlideshow = async (id, data) => {
+        const res = await fetch(`${API_BASE_URL}/admin/slideshows/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Khong the cap nhat slide');
+        }
+        return res.json();
+    };
+
+    const deleteSlideshow = async (id) => {
+        const res = await fetch(`${API_BASE_URL}/admin/slideshows/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        if (res.status === 401 || res.status === 403) {
+            clearAdminSession();
+            throw new Error('Khong co quyen');
+        }
+        if (!res.ok) throw new Error('Khong the xoa slide');
+        return res.json();
+    };
+
     return (
         <AppContext.Provider value={{
             products,
@@ -817,7 +897,14 @@ export const AppProvider = ({ children }) => {
             createNews,
             updateNews,
             deleteNews,
-            setNewsPin
+            setNewsPin,
+            fetchSlideshows,
+            fetchSlideshowById,
+            fetchAdminSlideshows,
+            fetchAdminSlideshowById,
+            createSlideshow,
+            updateSlideshow,
+            deleteSlideshow
         }}>
             {children}
         </AppContext.Provider>

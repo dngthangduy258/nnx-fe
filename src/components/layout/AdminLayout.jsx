@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBasket, ClipboardList, LogOut, Package, ArrowLeft, Menu, X, Layers, Database, Newspaper } from 'lucide-react';
+import { LayoutDashboard, ShoppingBasket, ClipboardList, LogOut, Package, ArrowLeft, Menu, X, Layers, Database, Newspaper, ImagePlus } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const AdminLayout = () => {
@@ -26,6 +26,7 @@ const AdminLayout = () => {
         { title: 'Sản phẩm', path: '/admin/products', icon: ShoppingBasket },
         { title: 'Đơn hàng', path: '/admin/orders', icon: ClipboardList },
         { title: 'Tin tức', path: '/admin/news', icon: Newspaper },
+        { title: 'Slideshow', path: '/admin/slideshows', icon: ImagePlus },
         { title: 'Kỹ thuật', path: '/admin/tech', icon: Database },
     ];
 
