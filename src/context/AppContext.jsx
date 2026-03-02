@@ -244,8 +244,10 @@ export const AppProvider = ({ children }) => {
 
             setCart([]);
             const result = { id: data.orderId, trackingId: data.trackingId };
-            if (data.checkoutUrl) {
+            if (data.paymentMethod === 'payos') {
+                result.paymentMethod = 'payos';
                 result.checkoutUrl = data.checkoutUrl;
+                result.qrCode = data.qrCode;
             }
             return result;
         } catch (err) {

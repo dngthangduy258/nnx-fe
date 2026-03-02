@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin, AlertCircle } from 'lucide-react';
@@ -10,6 +10,7 @@ import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
 
 const Cart = () => {
     const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl } = useApp();
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const payosCancel = searchParams.get('payos') === 'cancel';
     const [isOrderPlaced, setIsOrderPlaced] = useState(false);
@@ -99,8 +100,8 @@ const Cart = () => {
         try {
             setIsLoading(true);
             const result = await checkout({ ...customerInfo, address }, paymentMethod);
-            if (result.checkoutUrl) {
-                window.location.href = result.checkoutUrl;
+            if (result.paymentMethod === 'payos' && result.trackingId) {
+                navigate(`/payment/${result.trackingId}`);
                 return;
             }
             setOrderData(result);
