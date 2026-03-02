@@ -100,7 +100,8 @@ const Cart = () => {
         try {
             setIsLoading(true);
             const result = await checkout({ ...customerInfo, address }, paymentMethod);
-            if (result.paymentMethod === 'payos' && result.trackingId) {
+            // PayOS: chuyển sang trang thanh toán custom (QR trên site), không redirect sang PayOS
+            if ((result.paymentMethod === 'payos' || result.checkoutUrl) && result.trackingId) {
                 navigate(`/payment/${result.trackingId}`);
                 return;
             }
