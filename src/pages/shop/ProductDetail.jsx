@@ -82,7 +82,7 @@ const ProductDetail = () => {
                 jsonLd={productJsonLd}
             />
         <div className="product-detail-page pt-24 pb-20 overflow-x-hidden">
-            <div className="container max-w-full">
+            <div className="container">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate(-1)}
@@ -212,9 +212,9 @@ const ProductDetail = () => {
                 {relatedProducts.length > 0 && (
                     <div className="related-section">
                         <h2 className="text-2xl font-extrabold text-primary-dark mb-6">Sản phẩm liên quan</h2>
-                        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                             {relatedProducts.map(p => (
-                                <div key={p.id} className="flex-shrink-0 w-[45vw] min-w-[160px] sm:min-w-[180px] md:shrink md:min-w-0 snap-start">
+                                <div key={p.id} className="min-w-0">
                                     <ProductCard product={p} />
                                 </div>
                             ))}

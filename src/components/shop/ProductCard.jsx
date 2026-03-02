@@ -16,10 +16,10 @@ const ProductCard = ({ product }) => {
     return (
         <Link
             to={`/product/${product.id}`}
-            className="bg-white group overflow-hidden border border-transparent hover:border-primary hover:shadow-md transition-all rounded-sm flex flex-col h-full transform hover:-translate-y-1 relative"
+            className="bg-white group overflow-hidden border border-transparent hover:border-primary hover:shadow-md transition-all rounded-sm flex flex-col h-full transform hover:-translate-y-1 relative min-w-0"
         >
             {/* Image Section */}
-            <div className="relative aspect-square bg-[#f5f5f5] w-full overflow-hidden">
+            <div className="relative aspect-square bg-[#f5f5f5] w-full min-w-0 overflow-hidden">
                 <img
                     src={getProductImageUrl(product.image, false, product.category)}
                     alt={product.name}
