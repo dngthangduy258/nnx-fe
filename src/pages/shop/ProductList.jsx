@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import ProductCard from '../../components/shop/ProductCard';
-import { ChevronRight, Filter, Search, Star, Menu, X } from 'lucide-react';
+import { ChevronRight, Filter, Search, Star, Menu, X, Package, TrendingUp } from 'lucide-react';
 import { categories as staticCategories } from '../../data/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,7 +24,18 @@ const ProductList = () => {
     // Filter states
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+    const [pricePreset, setPricePreset] = useState(''); // 'under100k' | '100k-500k' | '500k-1m' | '1m-2m' | 'over2m'
+    const [inStockOnly, setInStockOnly] = useState(false);
+    const [minRating, setMinRating] = useState(0); // 0 = all, 3 = 3+, 4 = 4+
     const [showMobileFilter, setShowMobileFilter] = useState(false);
+
+    const PRICE_PRESETS = [
+        { id: 'under100k', label: 'Dưới 100.000₫', min: 0, max: 100000 },
+        { id: '100k-500k', label: '100.000₫ - 500.000₫', min: 100000, max: 500000 },
+        { id: '500k-1m', label: '500.000₫ - 1.000.000₫', min: 500000, max: 1000000 },
+        { id: '1m-2m', label: '1.000.000₫ - 2.000.000₫', min: 1000000, max: 2000000 },
+        { id: 'over2m', label: 'Trên 2.000.000₫', min: 2000000, max: null },
+    ];
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 12;
     const categories = apiCategories.length > 0 ? apiCategories : staticCategories;
@@ -60,9 +71,48 @@ const ProductList = () => {
     };
 
     const handlePriceFilter = (e) => {
-        e.preventDefault();
-        setCurrentPage(1); // Reset to first page
+        e?.preventDefault?.();
+        setCurrentPage(1);
         setShowMobileFilter(false);
+    };
+
+    const handlePricePreset = (presetId) => {
+        const preset = PRICE_PRESETS.find(p => p.id === presetId);
+        if (!preset) {
+            setPricePreset('');
+            setMinPrice('');
+            setMaxPrice('');
+        } else {
+            setPricePreset(presetId);
+            setMinPrice(preset.min > 0 ? String(preset.min) : '');
+            setMaxPrice(preset.max ? String(preset.max) : '');
+        }
+        setCurrentPage(1);
+    };
+
+    const handleClearFilters = () => {
+        setMinPrice('');
+        setMaxPrice('');
+        setPricePreset('');
+        setInStockOnly(false);
+        setMinRating(0);
+        setSelectedCategory('all');
+        setCurrentPage(1);
+        setShowMobileFilter(false);
+        navigate('/products');
+    };
+
+    const getEffectivePriceRange = () => {
+        let min = minPrice ? parseInt(minPrice, 10) : null;
+        let max = maxPrice ? parseInt(maxPrice, 10) : null;
+        if (pricePreset) {
+            const preset = PRICE_PRESETS.find(p => p.id === pricePreset);
+            if (preset) {
+                min = preset.min;
+                max = preset.max;
+            }
+        }
+        return { min, max };
     };
 
     const filteredProducts = useMemo(() => {
@@ -74,22 +124,26 @@ const ProductList = () => {
 
         if (searchTerm) {
             result = result.filter(p =>
-                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.description.toLowerCase().includes(searchTerm.toLowerCase())
+                (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (p.description || '').toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        if (minPrice) result = result.filter(p => p.price >= parseInt(minPrice));
-        if (maxPrice) result = result.filter(p => p.price <= parseInt(maxPrice));
+        const { min, max } = getEffectivePriceRange();
+        if (min != null && !isNaN(min)) result = result.filter(p => p.price >= min);
+        if (max != null && !isNaN(max)) result = result.filter(p => p.price <= max);
+
+        if (inStockOnly) result = result.filter(p => (p.stock ?? 0) > 0);
+        if (minRating > 0) result = result.filter(p => (p.rating ?? 0) >= minRating);
 
         // Sort logic
         if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
         if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
-        if (sortBy === 'rating') result.sort((a, b) => b.rating - a.rating);
-        if (sortBy === 'popular') result.sort((a, b) => b.rating - a.rating);
+        if (sortBy === 'rating') result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+        if (sortBy === 'popular') result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 
         return result;
-    }, [products, selectedCategory, searchTerm, sortBy, minPrice, maxPrice]);
+    }, [products, selectedCategory, searchTerm, sortBy, minPrice, maxPrice, pricePreset, inStockOnly, minRating]);
 
     // Pagination logic
     const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
@@ -182,49 +236,70 @@ const ProductList = () => {
                                 </ul>
                             </div>
 
-                            <div className="mb-4">
-                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase text-primary">
-                                    Khoảng Giá (₫)
+                            {/* Khoảng giá */}
+                            <div className="mb-6">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase text-primary">
+                                    <TrendingUp className="w-4 h-4" /> Khoảng giá
                                 </h3>
-                                <form onSubmit={handlePriceFilter} className="flex flex-col gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="number"
-                                            placeholder="TỪ"
-                                            className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-primary"
-                                            value={minPrice}
-                                            onChange={e => setMinPrice(e.target.value)}
-                                        />
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {PRICE_PRESETS.map(p => (
+                                        <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => handlePricePreset(pricePreset === p.id ? '' : p.id)}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${pricePreset === p.id ? 'bg-primary text-white border-primary' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <form onSubmit={handlePriceFilter} className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <input type="number" placeholder="₫ Từ" className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-primary" value={minPrice} onChange={e => { setPricePreset(''); setMinPrice(e.target.value); }} />
                                         <span className="text-gray-400">—</span>
-                                        <input
-                                            type="number"
-                                            placeholder="ĐẾN"
-                                            className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-primary"
-                                            value={maxPrice}
-                                            onChange={e => setMaxPrice(e.target.value)}
-                                        />
+                                        <input type="number" placeholder="₫ Đến" className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-primary" value={maxPrice} onChange={e => { setPricePreset(''); setMaxPrice(e.target.value); }} />
                                     </div>
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-primary text-white py-3 font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95"
-                                    >
-                                        ÁP DỤNG BỘ LỌC
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setMinPrice('');
-                                            setMaxPrice('');
-                                            setSelectedCategory('all');
-                                            setCurrentPage(1);
-                                            setShowMobileFilter(false);
-                                            navigate('/products');
-                                        }}
-                                        className="w-full border border-gray-200 text-gray-500 py-3 text-sm font-medium rounded-lg"
-                                    >
-                                        Xóa tất cả
-                                    </button>
                                 </form>
+                            </div>
+
+                            {/* Tình trạng kho */}
+                            <div className="mb-6">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase text-primary">
+                                    <Package className="w-4 h-4" /> Tình trạng
+                                </h3>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={inStockOnly} onChange={e => { setInStockOnly(e.target.checked); setCurrentPage(1); }} className="rounded border-gray-300 text-primary focus:ring-primary" />
+                                    <span className="text-sm text-gray-700">Chỉ hiển thị còn hàng</span>
+                                </label>
+                            </div>
+
+                            {/* Đánh giá */}
+                            <div className="mb-6">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase text-primary">
+                                    <Star className="w-4 h-4" /> Đánh giá
+                                </h3>
+                                <div className="flex flex-col gap-1.5">
+                                    {[4, 3].map(r => (
+                                        <button
+                                            key={r}
+                                            type="button"
+                                            onClick={() => { setMinRating(minRating === r ? 0 : r); setCurrentPage(1); }}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${minRating === r ? 'bg-primary/10 text-primary font-medium' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                                        >
+                                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                            <span>Từ {r} sao trở lên</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <button type="button" onClick={handlePriceFilter} className="w-full bg-primary text-white py-3 font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95">
+                                    ÁP DỤNG BỘ LỌC
+                                </button>
+                                <button type="button" onClick={handleClearFilters} className="w-full border border-gray-200 text-gray-500 py-3 text-sm font-medium rounded-lg">
+                                    Xóa tất cả
+                                </button>
                             </div>
                         </motion.div>
                     </>
@@ -262,32 +337,75 @@ const ProductList = () => {
                             <Filter className="w-5 h-5" /> Bộ lọc tìm kiếm
                         </h2>
 
+                        {/* Khoảng giá */}
                         <div className="mb-4">
-                            <h3 className="text-sm text-gray-700 font-medium mb-3">Khoảng Giá</h3>
-                            <form className="flex items-center gap-2 mb-2" onSubmit={handlePriceFilter}>
-                                <input
-                                    type="number"
-                                    placeholder="₫ TỪ"
-                                    className="w-[80px] p-1 text-xs border border-gray-300 rounded-sm focus:border-primary outline-none"
-                                    value={minPrice}
-                                    onChange={e => setMinPrice(e.target.value)}
-                                />
-                                <span>-</span>
-                                <input
-                                    type="number"
-                                    placeholder="₫ ĐẾN"
-                                    className="w-[80px] p-1 text-xs border border-gray-300 rounded-sm focus:border-primary outline-none"
-                                    value={maxPrice}
-                                    onChange={e => setMaxPrice(e.target.value)}
-                                />
+                            <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                                <TrendingUp className="w-3.5 h-3.5 text-primary" /> Khoảng giá
+                            </h3>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                {PRICE_PRESETS.map(p => (
+                                    <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => handlePricePreset(pricePreset === p.id ? '' : p.id)}
+                                        className={`px-2 py-1 text-[10px] font-medium rounded border transition-colors ${pricePreset === p.id ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <form className="flex items-center gap-1 mb-2" onSubmit={handlePriceFilter}>
+                                <input type="number" placeholder="₫ Từ" className="w-[70px] p-1 text-[10px] border border-gray-200 rounded focus:border-primary outline-none" value={minPrice} onChange={e => { setPricePreset(''); setMinPrice(e.target.value); }} />
+                                <span className="text-gray-400 text-xs">-</span>
+                                <input type="number" placeholder="₫ Đến" className="w-[70px] p-1 text-[10px] border border-gray-200 rounded focus:border-primary outline-none" value={maxPrice} onChange={e => { setPricePreset(''); setMaxPrice(e.target.value); }} />
                             </form>
-                            <button
-                                className="w-full bg-primary text-white text-xs py-1.5 uppercase font-medium rounded-sm hover:bg-primary-dark transition-colors"
-                                onClick={handlePriceFilter}
-                            >
-                                Áp dụng
-                            </button>
                         </div>
+
+                        {/* Tình trạng kho */}
+                        <div className="mb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                                <Package className="w-3.5 h-3.5 text-primary" /> Tình trạng
+                            </h3>
+                            <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
+                                <input type="checkbox" checked={inStockOnly} onChange={e => { setInStockOnly(e.target.checked); setCurrentPage(1); }} className="rounded border-gray-300 text-primary focus:ring-primary" />
+                                Chỉ hiển thị còn hàng
+                            </label>
+                        </div>
+
+                        {/* Đánh giá */}
+                        <div className="mb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                                <Star className="w-3.5 h-3.5 text-primary" /> Đánh giá
+                            </h3>
+                            <div className="flex flex-col gap-1">
+                                {[4, 3].map(r => (
+                                    <button
+                                        key={r}
+                                        type="button"
+                                        onClick={() => { setMinRating(minRating === r ? 0 : r); setCurrentPage(1); }}
+                                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-xs text-left transition-colors ${minRating === r ? 'bg-primary/10 text-primary font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                        Từ {r} sao trở lên
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handlePriceFilter}
+                            className="w-full bg-primary text-white text-xs py-2 uppercase font-medium rounded hover:bg-primary-dark transition-colors"
+                        >
+                            Áp dụng
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleClearFilters}
+                            className="w-full mt-2 border border-gray-200 text-gray-500 text-xs py-1.5 rounded hover:bg-gray-50"
+                        >
+                            Xóa tất cả
+                        </button>
                     </div>
                 </div>
 
@@ -347,16 +465,27 @@ const ProductList = () => {
                     </div>
 
                     {/* Active Filters Display */}
-                    {(searchTerm || selectedCategory !== 'all') && (
-                        <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 bg-white p-2 md:bg-transparent md:p-0">
-                            <Search className="w-4 h-4 text-primary" />
-                            Kết quả tìm kiếm cho
-                            {searchTerm && <span className="font-bold text-primary">'{searchTerm}'</span>}
-                            {selectedCategory !== 'all' && (
-                                <span className="font-bold text-primary">trong mục {categories.find(c => c.id === selectedCategory)?.name}</span>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
+                        {(searchTerm || selectedCategory !== 'all' || minPrice || maxPrice || inStockOnly || minRating > 0) && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Search className="w-4 h-4 text-primary flex-shrink-0" />
+                                <span className="text-gray-600">Kết quả:</span>
+                                {searchTerm && <span className="font-bold text-primary">"{searchTerm}"</span>}
+                                {selectedCategory !== 'all' && (
+                                    <span className="font-bold text-primary">• {categories.find(c => c.id === selectedCategory)?.name}</span>
+                                )}
+                                {(minPrice || maxPrice) && (
+                                    <span className="text-gray-600">• Giá {minPrice && !isNaN(parseInt(minPrice, 10)) ? `≥ ${parseInt(minPrice, 10).toLocaleString('vi-VN')}₫` : ''} {minPrice && maxPrice ? '–' : ''} {maxPrice && !isNaN(parseInt(maxPrice, 10)) ? `≤ ${parseInt(maxPrice, 10).toLocaleString('vi-VN')}₫` : ''}</span>
+                                )}
+                                {inStockOnly && <span className="text-green-600 font-medium">• Còn hàng</span>}
+                                {minRating > 0 && <span className="text-amber-600 font-medium">• Từ {minRating} sao</span>}
+                                <span className="text-gray-500">({filteredProducts.length} sản phẩm)</span>
+                                <button onClick={handleClearFilters} className="text-primary text-xs font-medium hover:underline ml-1">
+                                    Xóa bộ lọc
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Grid List */}
                     {paginatedProducts.length > 0 ? (
@@ -366,14 +495,15 @@ const ProductList = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white py-24 flex flex-col items-center justify-center rounded-sm">
+                        <div className="bg-white py-24 flex flex-col items-center justify-center rounded-sm relative z-10">
                             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
                                 <Search className="w-12 h-12" />
                             </div>
                             <h3 className="text-lg font-medium text-gray-700 mb-2">Không tìm thấy sản phẩm</h3>
                             <button
-                                onClick={() => navigate('/products')}
-                                className="text-primary font-medium border border-primary px-4 py-2 hover:bg-primary/5 transition-colors"
+                                type="button"
+                                onClick={handleClearFilters}
+                                className="text-primary font-medium border-2 border-primary px-6 py-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
                             >
                                 Xóa điều kiện lọc
                             </button>
