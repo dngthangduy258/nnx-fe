@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import SEO from '../../components/common/SEO';
-import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Copy, Check } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Copy, Check, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
 import { useApp, API_BASE_URL, getProductImageUrl } from '../../context/AppContext';
@@ -80,6 +80,24 @@ const OrderTracking = () => {
             <SEO title={`Đơn hàng #${order.id}`} description={`Tra cứu đơn hàng ${order.tracking_id}`} noindex />
             <div className="order-tracking-page pt-24 pb-20 bg-gray-50/30 min-h-screen">
                 <div className="container">
+                {order?.payment_method === 'payos' && order?.status === 'pending' && (
+                    <div className="mb-8 p-6 rounded-2xl bg-amber-50 border-2 border-amber-200 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                                <div className="w-14 h-14 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                                    <CreditCard className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-extrabold text-amber-800 mb-1">Chờ thanh toán PayOS</h2>
+                                    <p className="text-amber-700 text-sm">Quét mã QR để thanh toán đơn hàng của bạn.</p>
+                                </div>
+                            </div>
+                            <Button onClick={() => navigate(`/payment/${order.tracking_id}`)} size="lg" className="flex-shrink-0">
+                                <CreditCard className="w-5 h-5 mr-2 inline" /> Quay lại mã thanh toán
+                            </Button>
+                        </div>
+                    </div>
+                )}
                 {payosSuccess && (
                     <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 shadow-sm">
                         <div className="flex items-start gap-4">
