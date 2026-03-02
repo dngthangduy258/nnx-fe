@@ -282,20 +282,28 @@ const Cart = () => {
                                             <button type="button" onClick={() => setFormError('')} className="text-amber-600 hover:text-amber-800 font-medium underline">Đóng</button>
                                         </div>
                                     )}
-                                    <input
-                                        type="text"
-                                        placeholder="Họ và tên"
-                                        className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
-                                        value={customerInfo.name}
-                                        onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, name: e.target.value }); }}
-                                    />
-                                    <input
-                                        type="tel"
-                                        placeholder="Số điện thoại"
-                                        className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
-                                        value={customerInfo.phone}
-                                        onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, phone: e.target.value }); }}
-                                    />
+                                    <div>
+                                        <label htmlFor="cart-name" className="block text-sm font-medium text-gray-700 mb-1.5">Họ và tên</label>
+                                        <input
+                                            id="cart-name"
+                                            type="text"
+                                            placeholder="Nhập họ và tên người nhận"
+                                            className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
+                                            value={customerInfo.name}
+                                            onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, name: e.target.value }); }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="cart-phone" className="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại</label>
+                                        <input
+                                            id="cart-phone"
+                                            type="tel"
+                                            placeholder="Nhập số điện thoại liên hệ"
+                                            className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
+                                            value={customerInfo.phone}
+                                            onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, phone: e.target.value }); }}
+                                        />
+                                    </div>
 
                                     <div className="space-y-3">
                                         <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -320,47 +328,60 @@ const Cart = () => {
                                             </button>
                                         </div>
 
-                                        <SearchableSelect
-                                            options={addresses}
-                                            value={customerInfo.provinceId}
-                                            onChange={handleProvinceChange}
-                                            placeholder="Chọn Tỉnh / Thành phố"
-                                            searchPlaceholder="Gõ để tìm (vd: ca → Cà Mau)"
-                                            getOptionLabel={(o) => o.name}
-                                            getOptionValue={(o) => o.id}
-                                        />
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tỉnh / Thành phố</label>
+                                            <SearchableSelect
+                                                options={addresses}
+                                                value={customerInfo.provinceId}
+                                                onChange={handleProvinceChange}
+                                                placeholder="Chọn Tỉnh / Thành phố"
+                                                searchPlaceholder="Gõ để tìm (vd: ca → Cà Mau)"
+                                                getOptionLabel={(o) => o.name}
+                                                getOptionValue={(o) => o.id}
+                                            />
+                                        </div>
 
                                         {!isNewFormat && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Quận / Huyện</label>
+                                                <SearchableSelect
+                                                    options={districts}
+                                                    value={customerInfo.districtId}
+                                                    onChange={handleDistrictChange}
+                                                    placeholder="Chọn Quận / Huyện"
+                                                    searchPlaceholder="Gõ để tìm..."
+                                                    disabled={!customerInfo.provinceId}
+                                                    getOptionLabel={(o) => o.name}
+                                                    getOptionValue={(o) => o.id}
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Xã / Phường</label>
                                             <SearchableSelect
-                                                options={districts}
-                                                value={customerInfo.districtId}
-                                                onChange={handleDistrictChange}
-                                                placeholder="Chọn Quận / Huyện"
+                                                options={wards}
+                                                value={customerInfo.wardId}
+                                                onChange={handleWardChange}
+                                                placeholder="Chọn Xã / Phường"
                                                 searchPlaceholder="Gõ để tìm..."
                                                 disabled={!customerInfo.provinceId}
                                                 getOptionLabel={(o) => o.name}
                                                 getOptionValue={(o) => o.id}
                                             />
-                                        )}
+                                        </div>
 
-                                        <SearchableSelect
-                                            options={wards}
-                                            value={customerInfo.wardId}
-                                            onChange={handleWardChange}
-                                            placeholder="Chọn Xã / Phường"
-                                            searchPlaceholder="Gõ để tìm..."
-                                            disabled={!customerInfo.provinceId}
-                                            getOptionLabel={(o) => o.name}
-                                            getOptionValue={(o) => o.id}
-                                        />
-
-                                        <input
-                                            type="text"
-                                            placeholder="Số nhà, tên đường (bắt buộc)"
-                                            className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
-                                            value={customerInfo.streetAddress}
-                                            onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, streetAddress: e.target.value }); }}
-                                        />
+                                        <div>
+                                            <label htmlFor="cart-street" className="block text-sm font-medium text-gray-700 mb-1.5">Số nhà, tên đường</label>
+                                            <input
+                                                id="cart-street"
+                                                type="text"
+                                                placeholder="VD: Số 98, Thôn 17"
+                                                className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-gray-200 focus:border-primary outline-none text-base touch-manipulation"
+                                                value={customerInfo.streetAddress}
+                                                onChange={(e) => { setFormError(''); setCustomerInfo({ ...customerInfo, streetAddress: e.target.value }); }}
+                                            />
+                                        </div>
                                         </>
                                     </div>
 
@@ -399,7 +420,7 @@ const Cart = () => {
                                                 <label className={`flex-1 flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300'}`}>
                                                     <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="sr-only" />
                                                     <CreditCard className="w-5 h-5 text-primary" />
-                                                    <span className="text-sm font-medium">COD (trả khi nhận)</span>
+                                                    <span className="text-sm font-medium">COD (Thanh toán khi nhận hàng)</span>
                                                 </label>
                                                 <label className={`flex-1 flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'payos' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300'}`}>
                                                     <input type="radio" name="payment" value="payos" checked={paymentMethod === 'payos'} onChange={() => setPaymentMethod('payos')} className="sr-only" />
