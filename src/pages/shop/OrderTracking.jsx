@@ -4,7 +4,7 @@ import SEO from '../../components/common/SEO';
 import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
-import { useApp, API_BASE_URL } from '../../context/AppContext';
+import { useApp, API_BASE_URL, getProductImageUrl } from '../../context/AppContext';
 import { formatDateTimeUTC7 } from '../../utils/date';
 
 const OrderTracking = () => {
@@ -209,7 +209,7 @@ const OrderTracking = () => {
                                         {order.items.map((item, index) => (
                                             <div key={index} className="flex gap-4 items-center group transition-all p-2 hover:bg-gray-50 rounded-2xl">
                                                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
-                                                    <img src={item.product_image} alt={item.product_name} className="w-full h-full object-cover" />
+                                                    <img src={getProductImageUrl(item.product_image, false, item.product_category)} alt={item.product_name} className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="font-bold text-sm line-clamp-1 group-hover:text-primary transition-colors">{item.product_name}</p>
