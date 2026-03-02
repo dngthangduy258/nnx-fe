@@ -156,14 +156,14 @@ const Cart = () => {
     return (
         <>
             <SEO title="Giỏ hàng" description="Giỏ hàng của bạn – Cửa hàng Vật tư nông nghiệp - Nông Nghiệp Xanh. Thanh toán COD, giao hàng tận nơi." url="/cart" />
-            <div className="cart-page pt-20 pb-24 sm:pt-24 sm:pb-20">
-            <div className="container">
+            <div className="cart-page pt-20 pb-24 sm:pt-24 sm:pb-20 overflow-x-hidden">
+            <div className="container max-w-full">
                 <h1 className="text-3xl font-extrabold text-primary-dark mb-10">Giỏ hàng của bạn</h1>
 
                 {cart.length > 0 ? (
                     <div className="grid lg:grid-cols-3 gap-10">
                         {/* Cart Items */}
-                        <div className="lg:col-span-2 space-y-4">
+                        <div className="lg:col-span-2 space-y-3 min-w-0">
                             <AnimatePresence>
                                 {cart.map((item) => (
                                     <motion.div
@@ -172,34 +172,33 @@ const Cart = () => {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
-                                        className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm"
+                                        className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-4 md:gap-6 p-3 sm:p-4 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm min-w-0"
                                     >
-                                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
+                                        <div className="w-12 h-12 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
                                             <img src={getProductImageUrl(item.image, false, item.category)} alt={item.name} className="w-full h-full object-cover" />
                                         </div>
-                                        <div className="flex-1 text-center sm:text-left">
-                                            <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>
-                                            <p className="text-sm text-text-muted capitalize mb-2">{item.category}</p>
-                                            <p className="font-bold text-primary">{item.price.toLocaleString('vi-VN')} đ</p>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-gray-800 text-xs sm:text-base line-clamp-2">{item.name}</h3>
+                                            <p className="text-[10px] sm:text-sm text-text-muted capitalize mt-0.5 hidden sm:block">{item.category}</p>
+                                            <p className="font-bold text-primary text-xs sm:text-base mt-0.5">{item.price.toLocaleString('vi-VN')} đ</p>
                                         </div>
 
-                                        <div className="flex items-center border border-gray-100 rounded-lg p-1 bg-gray-50">
-                                            <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="p-1.5 hover:bg-white rounded-md transition-all">
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-                                            <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="p-1.5 hover:bg-white rounded-md transition-all">
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-6 sm:gap-2 w-full sm:w-auto sm:min-w-[120px]">
-                                            <p className="font-bold text-lg text-primary sm:text-gray-800">{(item.price * item.quantity).toLocaleString('vi-VN')} đ</p>
+                                        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-auto sm:ml-0">
+                                            <div className="flex items-center border border-gray-100 rounded-lg p-0.5 sm:p-1 bg-gray-50">
+                                                <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="p-1 sm:p-1.5 hover:bg-white rounded-md transition-all">
+                                                    <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                </button>
+                                                <span className="w-5 sm:w-8 text-center font-bold text-xs">{item.quantity}</span>
+                                                <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="p-1 sm:p-1.5 hover:bg-white rounded-md transition-all">
+                                                    <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                </button>
+                                            </div>
+                                            <p className="font-bold text-xs sm:text-base md:text-lg text-primary whitespace-nowrap min-w-0">{(item.price * item.quantity).toLocaleString('vi-VN')} đ</p>
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
-                                                className="text-red-400 hover:text-red-600 transition-colors p-2 sm:p-0"
+                                                className="text-red-400 hover:text-red-600 transition-colors p-1 sm:p-2 flex-shrink-0"
                                             >
-                                                <Trash2 className="w-5 h-5" />
+                                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                             </button>
                                         </div>
                                     </motion.div>

@@ -81,8 +81,8 @@ const ProductDetail = () => {
                 type="product"
                 jsonLd={productJsonLd}
             />
-        <div className="product-detail-page pt-24 pb-20">
-            <div className="container">
+        <div className="product-detail-page pt-24 pb-20 overflow-x-hidden">
+            <div className="container max-w-full">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate(-1)}
@@ -96,13 +96,13 @@ const ProductDetail = () => {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-3"
+                        className="space-y-3 min-w-0 w-full max-w-full"
                     >
-                        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg">
+                        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 border border-gray-100 shadow-lg w-full max-w-full">
                             <img
                                 src={mainImageUrl}
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover max-w-full max-h-full"
                             />
                         </div>
                         {allImages.length > 1 && (
@@ -131,11 +131,12 @@ const ProductDetail = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
+                        className="min-w-0"
                     >
                         <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-4">
                             {categoryName}
                         </span>
-                        <h1 className="text-4xl font-extrabold text-primary-dark mb-2">{product.name}</h1>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-dark mb-2 break-words">{product.name}</h1>
 
                         <div className="flex items-center gap-4 mb-6">
                             <div className="flex items-center gap-1 text-amber-500">
@@ -210,10 +211,12 @@ const ProductDetail = () => {
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
                     <div className="related-section">
-                        <h2 className="text-2xl font-extrabold text-primary-dark mb-8">Sản phẩm liên quan</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        <h2 className="text-2xl font-extrabold text-primary-dark mb-6">Sản phẩm liên quan</h2>
+                        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0">
                             {relatedProducts.map(p => (
-                                <ProductCard key={p.id} product={p} />
+                                <div key={p.id} className="flex-shrink-0 w-[45vw] min-w-[160px] sm:min-w-[180px] md:shrink md:min-w-0 snap-start">
+                                    <ProductCard product={p} />
+                                </div>
                             ))}
                         </div>
                     </div>
