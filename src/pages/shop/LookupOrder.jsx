@@ -5,6 +5,7 @@ import { Search, Phone, Hash, ArrowRight, Package, Clock, CheckCircle } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 import { API_BASE_URL } from '../../context/AppContext';
+import { formatDateUTC7 } from '../../utils/date';
 
 const LookupOrder = () => {
     const [lookupType, setLookupType] = useState('tracking'); // 'tracking' or 'phone'
@@ -127,7 +128,7 @@ const LookupOrder = () => {
                                         </div>
                                         <div>
                                             <p className="font-extrabold text-primary-dark">Đơn hàng #{order.id}</p>
-                                            <p className="text-xs text-text-muted">{new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
+                                            <p className="text-xs text-text-muted">{formatDateUTC7(order.created_at)}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">

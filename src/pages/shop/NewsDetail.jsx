@@ -6,6 +6,7 @@ import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import { siteConfig } from '../../data/seo-config';
 import { Pin, Calendar, ArrowLeft } from 'lucide-react';
+import { formatDateUTC7 } from '../../utils/date';
 
 const NewsDetail = () => {
     const { id } = useParams();
@@ -22,10 +23,7 @@ const NewsDetail = () => {
             .finally(() => setLoading(false));
     }, [id, fetchNewsById]);
 
-    const formatDate = (d) => {
-        if (!d) return '';
-        return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
+    const formatDate = (d) => formatDateUTC7(d);
 
     if (loading) {
         return (

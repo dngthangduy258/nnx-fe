@@ -5,6 +5,7 @@ import SEO from '../../components/common/SEO';
 import { useApp, getDefaultProductImageUrl } from '../../context/AppContext';
 import ProductCard from '../../components/shop/ProductCard';
 import { categories } from '../../data/categories';
+import { formatDateUTC7 } from '../../utils/date';
 
 /** Lấy sản phẩm đều theo từng danh mục (round-robin). Sau này có thể sort theo số lượng mua/đánh giá trong từng category trước khi pick. */
 function pickProductsBalancedByCategory(products, limit, categoryOrder = []) {
@@ -148,7 +149,7 @@ const Home = () => {
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <span className="text-[10px] text-gray-500">{new Date(item.created_at).toLocaleDateString('vi-VN')}</span>
+                                            <span className="text-[10px] text-gray-500">{formatDateUTC7(item.created_at)}</span>
                                             <h3 className="text-xs font-semibold text-gray-800 group-hover:text-primary line-clamp-2 leading-tight">{item.title}</h3>
                                         </div>
                                     </Link>

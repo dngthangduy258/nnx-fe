@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { MapPin, Phone, User, Calendar, ExternalLink } from 'lucide-react';
+import { formatDateUTC7, formatDateTimeUTC7 } from '../../utils/date';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -229,7 +230,7 @@ const AdminOrders = () => {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mt-4">
                                         <span className="flex items-center gap-2 text-sm text-gray-600"><User className="w-4 h-4 text-primary" /> {order.customer_name}</span>
                                         <span className="flex items-center gap-2 text-sm text-gray-600"><Phone className="w-4 h-4 text-primary" /> {order.customer_phone}</span>
-                                        <span className="flex items-center gap-2 text-sm text-gray-600"><Calendar className="w-4 h-4 text-primary" /> {new Date(order.created_at).toLocaleDateString('vi-VN')}</span>
+                                        <span className="flex items-center gap-2 text-sm text-gray-600"><Calendar className="w-4 h-4 text-primary" /> {formatDateUTC7(order.created_at)}</span>
                                     </div>
                                     <p className="flex items-center gap-2 text-sm text-gray-500"><MapPin className="w-4 h-4 text-primary" /> {order.customer_address}</p>
                                 </div>
@@ -343,7 +344,7 @@ const AdminOrders = () => {
                                 <div key={t.id} className="border border-gray-100 rounded-xl p-3 text-sm">
                                     <div className="font-bold">{t.status}</div>
                                     <div>{t.note}</div>
-                                    <div className="text-xs text-gray-400">{new Date(t.timestamp).toLocaleString('vi-VN')}</div>
+                                    <div className="text-xs text-gray-400">{formatDateTimeUTC7(t.timestamp)}</div>
                                 </div>
                             ))}
                         </div>

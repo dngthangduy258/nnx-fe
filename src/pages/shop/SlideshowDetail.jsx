@@ -6,6 +6,7 @@ import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import { siteConfig } from '../../data/seo-config';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { formatDateUTC7 } from '../../utils/date';
 
 const SlideshowDetail = () => {
     const { id } = useParams();
@@ -22,10 +23,7 @@ const SlideshowDetail = () => {
             .finally(() => setLoading(false));
     }, [id, fetchSlideshowById]);
 
-    const formatDate = (d) => {
-        if (!d) return '';
-        return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
+    const formatDate = (d) => formatDateUTC7(d);
 
     const isExternalLink = (url) => url && (url.startsWith('http://') || url.startsWith('https://'));
 

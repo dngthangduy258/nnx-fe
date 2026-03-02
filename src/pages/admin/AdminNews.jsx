@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Plus, Edit2, Trash2, Pin, X, Newspaper, ImagePlus } from 'lucide-react';
 import Button from '../../components/common/Button';
+import { formatDateUTC7 } from '../../utils/date';
 
 const defaultForm = {
     title: '',
@@ -126,7 +127,7 @@ const AdminNews = () => {
         }
     };
 
-    const formatDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '');
+    const formatDate = (d) => formatDateUTC7(d);
 
     return (
         <div className="space-y-6">

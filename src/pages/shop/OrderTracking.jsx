@@ -5,6 +5,7 @@ import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Cop
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
 import { useApp, API_BASE_URL } from '../../context/AppContext';
+import { formatDateTimeUTC7 } from '../../utils/date';
 
 const OrderTracking = () => {
     const { trackingId } = useParams();
@@ -242,7 +243,7 @@ const OrderTracking = () => {
                                         <div>
                                             <p className={`font-bold ${index === 0 ? 'text-primary' : 'text-gray-600'}`}>{getStatusText(t.status)}</p>
                                             <p className="text-sm text-text-muted mb-1">{t.note}</p>
-                                            <p className="text-xs text-gray-400">{new Date(t.timestamp).toLocaleString('vi-VN')}</p>
+                                            <p className="text-xs text-gray-400">{formatDateTimeUTC7(t.timestamp)}</p>
                                         </div>
                                     </div>
                                 ))}
