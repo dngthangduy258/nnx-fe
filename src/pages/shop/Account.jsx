@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../../components/common/SEO';
-import { Package, User, LogOut, ShoppingCart, MapPin, Phone } from 'lucide-react';
+import { Package, User, LogOut, ShoppingCart } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useApp } from '../../context/AppContext';
 import { formatDateTimeUTC7 } from '../../utils/date';
+import AddressForm, { buildAddressFromStructured, parseAddressFromApi } from '../../components/common/AddressForm';
+import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
+
+const emptyAddress = { addressType: 'old', provinceId: '', districtId: '', wardId: '', streetAddress: '' };
 
 const Account = () => {
     const { customer, customerOrders, isCustomerAuthenticated, customerLogout, fetchCustomerOrders, updateCustomerProfile } = useApp();
     const navigate = useNavigate();
     const [editing, setEditing] = useState(false);
     const [editName, setEditName] = useState('');
-    const [editAddress, setEditAddress] = useState('');
+    const [editAddressData, setEditAddressData] = useState(emptyAddress);
     const [saveError, setSaveError] = useState('');
 
     useEffect(() => {
         if (isCustomerAuthenticated) {
             fetchCustomerOrders();
             setEditName(customer?.name || '');
-            setEditAddress(customer?.address || '');
+            const parsed = parseAddressFromApi(customer?.address);
+            setEditAddressData(parsed || emptyAddress);
         }
     }, [isCustomerAuthenticated, customer?.name, customer?.address, fetchCustomerOrders]);
 
@@ -36,12 +41,27 @@ const Account = () => {
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         setSaveError('');
+        const { provinceId, districtId, wardId, streetAddress, addressType } = editAddressData;
+        if (!provinceId || !wardId || !streetAddress?.trim()) {
+            setSaveError('Vui lòng điền đầy đủ địa chỉ (Tỉnh, Xã/Phường, Số nhà)');
+            return;
+        }
+        if (addressType === 'old' && !districtId) {
+            setSaveError('Vui lòng chọn Quận/Huyện');
+            return;
+        }
         try {
-            await updateCustomerProfile({ name: editName, address: editAddress });
+            await updateCustomerProfile({ name: editName, address: JSON.stringify(editAddressData) });
             setEditing(false);
         } catch (err) {
             setSaveError(err.message || 'Cập nhật thất bại');
         }
+    };
+
+    const displayAddress = () => {
+        const parsed = parseAddressFromApi(customer?.address);
+        if (parsed) return buildAddressFromStructured(parsed, addressesOld, addressesNew);
+        return customer?.address || '—';
     };
 
     if (!isCustomerAuthenticated) return null;
@@ -75,14 +95,8 @@ const Account = () => {
                                     <input type="text" value={customer?.phone} disabled className="w-full px-4 py-2 border border-gray-100 rounded-xl bg-gray-50 text-gray-500" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ</label>
-                                    <input
-                                        type="text"
-                                        value={editAddress}
-                                        onChange={(e) => setEditAddress(e.target.value)}
-                                        placeholder="Số nhà, đường, phường, quận..."
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl"
-                                    />
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ (theo ĐVHC cũ/mới)</label>
+                                    <AddressForm value={editAddressData} onChange={setEditAddressData} setFormError={setSaveError} />
                                 </div>
                                 <div className="flex gap-2">
                                     <Button type="submit">Lưu</Button>
@@ -93,7 +107,7 @@ const Account = () => {
                             <div className="space-y-2">
                                 <p><span className="text-gray-500">Họ tên:</span> <span className="font-bold">{customer?.name}</span></p>
                                 <p><span className="text-gray-500">SĐT:</span> <span className="font-bold">{customer?.phone}</span></p>
-                                <p><span className="text-gray-500">Địa chỉ:</span> {customer?.address || '—'}</p>
+                                <p><span className="text-gray-500">Địa chỉ:</span> {displayAddress()}</p>
                                 <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="mt-2">Chỉnh sửa</Button>
                             </div>
                         )}

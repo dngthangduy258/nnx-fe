@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../../components/common/Button';
 import SearchableSelect from '../../components/common/SearchableSelect';
 import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
+import { parseAddressFromApi } from '../../components/common/AddressForm';
 
 const Cart = () => {
     const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl, customer, isCustomerAuthenticated } = useApp();
@@ -56,12 +57,26 @@ const Cart = () => {
 
     useEffect(() => {
         if (isCustomerAuthenticated && customer) {
-            setCustomerInfo(prev => ({
-                ...prev,
-                name: customer.name || prev.name,
-                phone: customer.phone || prev.phone,
-                streetAddress: customer.address || prev.streetAddress
-            }));
+            const parsedAddr = parseAddressFromApi(customer.address);
+            if (parsedAddr) {
+                setAddressType(parsedAddr.addressType || 'old');
+                setCustomerInfo(prev => ({
+                    ...prev,
+                    name: customer.name || prev.name,
+                    phone: customer.phone || prev.phone,
+                    provinceId: parsedAddr.provinceId || prev.provinceId,
+                    districtId: parsedAddr.districtId || prev.districtId,
+                    wardId: parsedAddr.wardId || prev.wardId,
+                    streetAddress: parsedAddr.streetAddress || prev.streetAddress
+                }));
+            } else {
+                setCustomerInfo(prev => ({
+                    ...prev,
+                    name: customer.name || prev.name,
+                    phone: customer.phone || prev.phone,
+                    streetAddress: (typeof customer.address === 'string' ? customer.address : '') || prev.streetAddress
+                }));
+            }
         }
     }, [isCustomerAuthenticated, customer?.name, customer?.phone, customer?.address]);
 

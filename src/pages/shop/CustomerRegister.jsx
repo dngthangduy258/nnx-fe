@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../../components/common/SEO';
-import { UserPlus, Lock, Phone, User, MapPin, ArrowRight } from 'lucide-react';
+import { UserPlus, Lock, Phone, User, ArrowRight } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useApp } from '../../context/AppContext';
+import AddressForm from '../../components/common/AddressForm';
+
+const emptyAddress = { addressType: 'old', provinceId: '', districtId: '', wardId: '', streetAddress: '' };
 
 const CustomerRegister = () => {
     const { customerRegister } = useApp();
@@ -11,9 +14,18 @@ const CustomerRegister = () => {
     const [phone, setPhone] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const [address, setAddress] = useState('');
+    const [addressData, setAddressData] = useState(emptyAddress);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const validateAddress = () => {
+        const { provinceId, districtId, wardId, streetAddress, addressType } = addressData;
+        if (!provinceId) return 'Vui lòng chọn Tỉnh/Thành phố';
+        if (addressType === 'old' && !districtId) return 'Vui lòng chọn Quận/Huyện';
+        if (!wardId) return 'Vui lòng chọn Xã/Phường';
+        if (!streetAddress?.trim()) return 'Vui lòng nhập số nhà, tên đường';
+        return null;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,9 +42,14 @@ const CustomerRegister = () => {
             setError('Mật khẩu tối thiểu 6 ký tự');
             return;
         }
+        const addrErr = validateAddress();
+        if (addrErr) {
+            setError(addrErr);
+            return;
+        }
         try {
             setLoading(true);
-            await customerRegister(phone.trim(), name.trim(), password, address.trim());
+            await customerRegister(phone.trim(), name.trim(), password, JSON.stringify(addressData));
             navigate('/account');
         } catch (err) {
             setError(err.message || 'Đăng ký thất bại');
@@ -97,17 +114,8 @@ const CustomerRegister = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ (tùy chọn)</label>
-                            <div className="relative">
-                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    placeholder="Số nhà, đường, phường, quận..."
-                                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                                />
-                            </div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ (theo ĐVHC cũ/mới)</label>
+                            <AddressForm value={addressData} onChange={setAddressData} setFormError={setError} showLabel={false} />
                         </div>
                         <Button type="submit" className="w-full" size="lg" disabled={loading}>
                             {loading ? 'Đang xử lý...' : 'Đăng ký'} <ArrowRight className="w-5 h-5 ml-2 inline" />
