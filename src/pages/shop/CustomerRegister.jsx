@@ -115,7 +115,7 @@ const CustomerRegister = () => {
                     </form>
                     <p className="text-center text-sm text-gray-500 mt-6">
                         Đã có tài khoản?{' '}
-                        <Link to="/login" className="text-primary font-bold hover:underline">Đăng nhập</Link>
+                        <Link to="/dang-nhap" className="text-primary font-bold hover:underline">Đăng nhập</Link>
                     </p>
                 </div>
             </div>

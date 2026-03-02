@@ -83,7 +83,7 @@ const CustomerLogin = () => {
                     </form>
                     <p className="text-center text-sm text-gray-500 mt-6">
                         Chưa có tài khoản?{' '}
-                        <Link to="/register" className="text-primary font-bold hover:underline">Đăng ký ngay</Link>
+                        <Link to="/dang-ky" className="text-primary font-bold hover:underline">Đăng ký ngay</Link>
                     </p>
                 </div>
             </div>
