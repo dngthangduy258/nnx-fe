@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import SEO from '../../components/common/SEO';
 import { Package, Truck, CheckCircle, Clock, MapPin, User, Phone, ArrowLeft, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -9,6 +9,8 @@ import { useApp, API_BASE_URL } from '../../context/AppContext';
 const OrderTracking = () => {
     const { trackingId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const payosSuccess = searchParams.get('payos') === 'success';
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -77,6 +79,12 @@ const OrderTracking = () => {
             <SEO title={`Đơn hàng #${order.id}`} description={`Tra cứu đơn hàng ${order.tracking_id}`} noindex />
             <div className="order-tracking-page pt-24 pb-20 bg-gray-50/30 min-h-screen">
                 <div className="container">
+                {payosSuccess && (
+                    <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 flex items-center gap-3">
+                        <CheckCircle className="w-6 h-6 flex-shrink-0" />
+                        <span className="font-medium">Thanh toán PayOS thành công! Đơn hàng đang được xử lý.</span>
+                    </div>
+                )}
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold mb-8 group"

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import SEO from '../../components/common/SEO';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, CreditCard, MapPin, AlertCircle } from 'lucide-react';
@@ -10,6 +10,8 @@ import { addressesOld, addressesNew } from '../../data/vietnam-addresses';
 
 const Cart = () => {
     const { cart, removeFromCart, updateCartQuantity, checkout, getProductImageUrl } = useApp();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const payosCancel = searchParams.get('payos') === 'cancel';
     const [isOrderPlaced, setIsOrderPlaced] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [addressType, setAddressType] = useState('old'); // 'old' | 'new'
@@ -43,6 +45,13 @@ const Cart = () => {
     const [orderData, setOrderData] = useState(null);
     const [formError, setFormError] = useState('');
     const [showReview, setShowReview] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('cod');
+
+    useEffect(() => {
+        if (payosCancel) {
+            setSearchParams({}, { replace: true });
+        }
+    }, [payosCancel, setSearchParams]);
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = subtotal > 1000000 ? 0 : 35000;
@@ -89,7 +98,11 @@ const Cart = () => {
         const address = buildAddressString();
         try {
             setIsLoading(true);
-            const result = await checkout({ ...customerInfo, address });
+            const result = await checkout({ ...customerInfo, address }, paymentMethod);
+            if (result.checkoutUrl) {
+                window.location.href = result.checkoutUrl;
+                return;
+            }
             setOrderData(result);
             setIsOrderPlaced(true);
         } catch (err) {
@@ -159,6 +172,13 @@ const Cart = () => {
             <div className="cart-page pt-20 pb-24 sm:pt-24 sm:pb-20 overflow-x-hidden">
             <div className="container max-w-full">
                 <h1 className="text-3xl font-extrabold text-primary-dark mb-10">Giỏ hàng của bạn</h1>
+
+                {payosCancel && (
+                    <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <span>Bạn đã hủy thanh toán PayOS. Đơn hàng vẫn được lưu — tra cứu bằng SĐT để thanh toán lại hoặc liên hệ hỗ trợ.</span>
+                    </div>
+                )}
 
                 {cart.length > 0 ? (
                     <div className="grid lg:grid-cols-3 gap-10">
@@ -345,6 +365,21 @@ const Cart = () => {
                                             <div className="flex justify-between"><span className="text-text-muted">Phí vận chuyển</span><span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')} đ`}</span></div>
                                             <div className="flex justify-between font-bold text-base pt-1"><span>Tổng cộng</span><span className="text-primary">{total.toLocaleString('vi-VN')} đ</span></div>
                                         </div>
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium text-gray-700">Phương thức thanh toán</p>
+                                            <div className="flex gap-3">
+                                                <label className={`flex-1 flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                    <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="sr-only" />
+                                                    <CreditCard className="w-5 h-5 text-primary" />
+                                                    <span className="text-sm font-medium">COD (trả khi nhận)</span>
+                                                </label>
+                                                <label className={`flex-1 flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'payos' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                    <input type="radio" name="payment" value="payos" checked={paymentMethod === 'payos'} onChange={() => setPaymentMethod('payos')} className="sr-only" />
+                                                    <span className="text-lg font-bold text-primary">PayOS</span>
+                                                    <span className="text-xs text-gray-500">VNPay, Momo, thẻ...</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                         {formError && (
                                             <div role="alert" className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2">
                                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -363,7 +398,7 @@ const Cart = () => {
                                 )}
 
                                 <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-text-muted uppercase font-bold text-center">
-                                    <CreditCard className="w-4 h-4" /> Thanh toán khi nhận hàng (COD)
+                                    <CreditCard className="w-4 h-4" /> COD hoặc PayOS (VNPay, Momo, thẻ)
                                 </div>
                             </div>
                         </div>

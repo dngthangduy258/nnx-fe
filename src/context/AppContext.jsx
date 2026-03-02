@@ -215,7 +215,7 @@ export const AppProvider = ({ children }) => {
         setCart(prev => prev.map(item => item.id === productId ? { ...item, quantity } : item));
     };
 
-    const checkout = async (customerInfo) => {
+    const checkout = async (customerInfo, paymentMethod = 'cod') => {
         // Validation
         if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
             throw new Error('Vui lòng điền đầy đủ thông tin nhận hàng');
@@ -234,7 +234,8 @@ export const AppProvider = ({ children }) => {
                     phone: customerInfo.phone,
                     address: customerInfo.address,
                     items: cart,
-                    total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+                    total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                    paymentMethod: paymentMethod === 'payos' ? 'payos' : 'cod'
                 })
             });
 
@@ -242,10 +243,11 @@ export const AppProvider = ({ children }) => {
             if (!response.ok) throw new Error(data.error || 'Không thể tạo đơn hàng');
 
             setCart([]);
-            return {
-                id: data.orderId,
-                trackingId: data.trackingId
-            };
+            const result = { id: data.orderId, trackingId: data.trackingId };
+            if (data.checkoutUrl) {
+                result.checkoutUrl = data.checkoutUrl;
+            }
+            return result;
         } catch (err) {
             console.error('Checkout error:', err);
             throw err;
