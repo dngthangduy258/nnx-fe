@@ -43,7 +43,7 @@ const AdminBulkTools = () => {
 
     const handleImportCSV = async () => {
         if (!importFile) {
-            alert('Chon file CSV truoc.');
+            alert('Chọn file CSV hoặc Excel (.xlsx) trước.');
             return;
         }
         setImporting(true);
@@ -125,7 +125,7 @@ const AdminBulkTools = () => {
         <div className="admin-bulk-tools space-y-8">
             <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">Công cụ hàng loạt</h1>
-                <p className="text-sm text-gray-500 mt-1">Import CSV, upload ảnh R2, thêm nhanh nhiều sản phẩm.</p>
+                <p className="text-sm text-gray-500 mt-1">Import CSV/Excel, upload ảnh R2, thêm nhanh nhiều sản phẩm.</p>
             </div>
 
             {/* Bảo trì: xóa link ảnh không phải R2 (Unsplash, link ngoài) → dùng ảnh mặc định */}
@@ -152,7 +152,7 @@ const AdminBulkTools = () => {
             {/* Import CSV */}
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                 <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                    <Upload className="w-4 h-4" /> Import CSV hàng loạt
+                    <Upload className="w-4 h-4" /> Import CSV / Excel hàng loạt
                 </h3>
                 <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -163,8 +163,8 @@ const AdminBulkTools = () => {
                         <FileDown className="w-4 h-4" /> Tải file mẫu
                     </button>
                     <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-sm font-medium cursor-pointer">
-                        <input type="file" accept=".csv" className="hidden" onChange={(e) => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }} />
-                        Chọn file CSV
+                        <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }} />
+                        Chọn file CSV hoặc Excel
                     </label>
                     {importFile && <span className="text-sm text-gray-500">{importFile.name}</span>}
                     <button
